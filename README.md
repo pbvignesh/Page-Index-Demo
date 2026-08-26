@@ -56,6 +56,12 @@ python cli.py ask 1 "How has operating margin trended?"
 uvicorn app.api:app --reload   # open http://localhost:8000
 ```
 
+## Spec-driven development
+
+[`SPEC.md`](SPEC.md) is the source of truth for the product. New work is described
+as a **delta** against it; a coding agent implements the delta, then folds it back
+into the spec (see `SPEC.md` §14). Architecture walkthroughs live in [`docs/`](docs/).
+
 ## Adding an analysis skill
 Drop a markdown file in `skills/` describing the method + guardrails and the
 `result` output contract (see the existing ones). The router will offer it
