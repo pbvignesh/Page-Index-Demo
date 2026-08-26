@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from pathlib import Path
 
-from . import config
+from .. import config
 
 _HARNESS = '''import json, pandas as pd
 _d = json.load(open("/work/dataset.json"))
@@ -23,37 +23,42 @@ except Exception as e:
 
 def build_image() -> str:
     """Build the sandbox image (idempotent). Returns docker's output."""
-    root = Path(__file__).resolve().parent.parent
-    r = subprocess.run(
+    repo_root = Path(__file__).resolve().parents[2]
+    completed = subprocess.run(
         ["docker", "build", "-t", config.SANDBOX_IMAGE, "-f", "Dockerfile.sandbox", "."],
-        cwd=root, capture_output=True, text=True,
+        cwd=repo_root, capture_output=True, text=True,
     )
-    return (r.stdout + r.stderr).strip()
+    return (completed.stdout + completed.stderr).strip()
 
 
 def run(code: str, dataset: dict, timeout: int = 35) -> dict:
     """dataset = {"columns": [...], "rows": [...]}. Returns {ok, result|error}."""
-    indented = "\n".join("    " + ln for ln in code.strip().splitlines()) or "    result = {}"
-    with tempfile.TemporaryDirectory() as td:
-        p = Path(td)
-        (p / "dataset.json").write_text(json.dumps({"columns": dataset["columns"], "rows": dataset["rows"]}))
-        (p / "main.py").write_text(_HARNESS.format(code=indented))
-        cmd = [
+    indented_code = "\n".join("    " + line for line in code.strip().splitlines()) or "    result = {}"
+
+    with tempfile.TemporaryDirectory() as work_dir:
+        work_path = Path(work_dir)
+        (work_path / "dataset.json").write_text(
+            json.dumps({"columns": dataset["columns"], "rows": dataset["rows"]})
+        )
+        (work_path / "main.py").write_text(_HARNESS.format(code=indented_code))
+
+        command = [
             "docker", "run", "--rm", "--network", "none",
             "--memory", "512m", "--cpus", "1", "--pids-limit", "128",
-            "-v", f"{td}:/work:ro", config.SANDBOX_IMAGE,
+            "-v", f"{work_dir}:/work:ro", config.SANDBOX_IMAGE,
             "python", "/work/main.py",
         ]
         try:
-            r = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+            completed = subprocess.run(command, capture_output=True, text=True, timeout=timeout)
         except subprocess.TimeoutExpired:
             return {"ok": False, "error": "sandbox timed out"}
         except FileNotFoundError:
             return {"ok": False, "error": "docker not available"}
-        out = (r.stdout or "").strip().splitlines()
-        for line in reversed(out):
+
+        # the result is the last JSON line the harness printed
+        for line in reversed((completed.stdout or "").strip().splitlines()):
             try:
                 return json.loads(line)
-            except Exception:
+            except json.JSONDecodeError:
                 continue
-        return {"ok": False, "error": (r.stderr or "no output from sandbox").strip()[:300]}
+        return {"ok": False, "error": (completed.stderr or "no output from sandbox").strip()[:300]}

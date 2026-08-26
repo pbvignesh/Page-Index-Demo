@@ -20,18 +20,23 @@ XBRL company facts).
 ## Layout
 ```
 app/
-  config.py   settings from .env
-  db.py       SQLAlchemy models: filings, nodes (the tree), datasets
-  edgar.py    fetch filing text + XBRL financials from SEC EDGAR
-  ingest.py   split into Item sections, summarize, store + datasets
-  llm.py      Anthropic wrapper
-  skills.py   load skill files
-  sandbox.py  run analysis code in Docker (no network, capped, non-root)
-  agent.py    route retrieve vs analyze -> cited answer / sandboxed artifact
-  api.py      FastAPI: /ingest /filings /ask  (+ serves the UI)
-skills/       analysis how-tos (margin_analysis, yoy_growth, ratio_analysis, common_size, guardrails)
-web/          the UI (talks to the API)
-cli.py        ingest / ask from the terminal
+  config.py        settings from .env
+  database.py      SQLAlchemy models: filings, nodes (the tree), datasets
+  llm.py           Anthropic wrapper
+  api.py           FastAPI: /ingest /filings /ask  (+ serves the UI)
+  ingest/          getting filings in
+    edgar.py       fetch filing text + XBRL financials from SEC EDGAR
+    pipeline.py    split into Item sections, summarize, store + datasets
+  agent/           answering questions
+    core.py        route retrieve vs analyze  (the answer() entry point)
+    retrieve.py    retrieval path: navigate the tree, answer from a section
+    analyze.py     analysis path: skill -> pandas -> sandbox -> artifact
+    sandbox.py     run analysis code in Docker (no network, capped, non-root)
+    skills.py      load the skill files
+skills/            analysis how-tos (margin_analysis, yoy_growth, ratio_analysis, common_size, guardrails)
+web/               the UI (talks to the API)
+cli.py             ingest / ask from the terminal
+docs/              HTML walkthroughs (this codebase; the ZoomRx architecture)
 ```
 
 ## Run

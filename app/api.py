@@ -9,10 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from . import agent
-from . import ingest as ingest_mod
-from .db import SessionLocal, Filing, init_db
+from . import ingest as ingest_module
+from .database import SessionLocal, Filing, init_db
 
-WEB = Path(__file__).resolve().parent.parent / "web"
+WEB_DIR = Path(__file__).resolve().parent.parent / "web"
 
 
 @asynccontextmanager
@@ -25,50 +25,86 @@ app = FastAPI(title="Filing Copilot", lifespan=lifespan)
 app.add_middleware(CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"])
 
 
+# --- serializers: turn ORM objects into plain dicts for the JSON responses ---
+
+def filing_summary(filing: Filing) -> dict:
+    return {
+        "id": filing.id,
+        "ticker": filing.ticker,
+        "company": filing.company,
+        "form": filing.form,
+        "period": filing.period,
+    }
+
+
+def node_summary(node) -> dict:
+    return {"item": node.item, "title": node.title, "summary": node.summary}
+
+
+def dataset_summary(dataset) -> dict:
+    return {"name": dataset.name, "label": dataset.label, "columns": dataset.columns}
+
+
+# --- routes ---
+
 @app.get("/")
 def index():
-    return FileResponse(WEB / "index.html")
+    return FileResponse(WEB_DIR / "index.html")
 
 
 @app.get("/filings")
-def filings():
-    with SessionLocal() as s:
-        return [{"id": f.id, "ticker": f.ticker, "company": f.company, "form": f.form, "period": f.period}
-                for f in s.query(Filing).order_by(Filing.id).all()]
+def list_filings():
+    with SessionLocal() as session:
+        filings = session.query(Filing).order_by(Filing.id).all()
+
+        results = []
+        for filing in filings:
+            results.append(filing_summary(filing))
+        return results
 
 
-@app.get("/filings/{fid}/outline")
-def outline(fid: int):
-    with SessionLocal() as s:
-        f = s.get(Filing, fid)
-        if not f:
+@app.get("/filings/{filing_id}/outline")
+def filing_outline(filing_id: int):
+    with SessionLocal() as session:
+        filing = session.get(Filing, filing_id)
+        if filing is None:
             return {"nodes": [], "datasets": []}
-        return {
-            "nodes": [{"item": n.item, "title": n.title, "summary": n.summary}
-                      for n in sorted(f.nodes, key=lambda n: n.order_ix)],
-            "datasets": [{"name": d.name, "label": d.label, "columns": d.columns} for d in f.datasets],
-        }
+
+        ordered_nodes = sorted(filing.nodes, key=lambda node: node.order_ix)
+
+        nodes = []
+        for node in ordered_nodes:
+            nodes.append(node_summary(node))
+
+        datasets = []
+        for dataset in filing.datasets:
+            datasets.append(dataset_summary(dataset))
+
+        return {"nodes": nodes, "datasets": datasets}
 
 
-class IngestReq(BaseModel):
+class IngestRequest(BaseModel):
     ticker: str
     form: str = "10-K"
 
 
 @app.post("/ingest")
-def do_ingest(req: IngestReq):
-    fid = ingest_mod.ingest(req.ticker, req.form)
-    with SessionLocal() as s:
-        f = s.get(Filing, fid)
-        return {"id": f.id, "ticker": f.ticker, "company": f.company, "form": f.form,
-                "period": f.period, "nodes": len(f.nodes), "datasets": len(f.datasets)}
+def ingest_filing(request: IngestRequest):
+    filing_id = ingest_module.ingest(request.ticker, request.form)
+
+    with SessionLocal() as session:
+        filing = session.get(Filing, filing_id)
+        response = filing_summary(filing)
+        response["nodes"] = len(filing.nodes)
+        response["datasets"] = len(filing.datasets)
+        return response
 
 
-class AskReq(BaseModel):
+class AskRequest(BaseModel):
     filing_id: int
     question: str
 
 
 @app.post("/ask")
-def ask(req: AskReq):
-    return agent.answer(req.filing_id, req.question)
+def ask(request: AskRequest):
+    return agent.answer(request.filing_id, request.question)

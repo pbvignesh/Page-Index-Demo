@@ -36,9 +36,9 @@ class Node(Base):
     id: Mapped[int] = mapped_column(primary_key=True)
     filing_id: Mapped[int] = mapped_column(ForeignKey("filings.id", ondelete="CASCADE"))
     order_ix: Mapped[int] = mapped_column(Integer, default=0)
-    item: Mapped[str] = mapped_column(String(24))     # e.g. "Item 1A"
-    title: Mapped[str] = mapped_column(String(200))   # e.g. "Risk Factors"
-    summary: Mapped[str] = mapped_column(Text, default="")  # LLM node summary (used for tree search)
+    item: Mapped[str] = mapped_column(String(24))          # e.g. "Item 1A"
+    title: Mapped[str] = mapped_column(String(200))        # e.g. "Risk Factors"
+    summary: Mapped[str] = mapped_column(Text, default="")  # node summary, used for tree search
     text: Mapped[str] = mapped_column(Text, default="")     # section body
 
     filing: Mapped["Filing"] = relationship(back_populates="nodes")
