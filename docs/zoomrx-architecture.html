@@ -88,6 +88,28 @@
   .platform-strip{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:12px}
   .platform-strip b{margin-right:6px;color:var(--ink)}
   .foot{color:var(--dim);font-size:12.5px;margin-top:40px;text-align:center}
+
+  /* ── interactive path lighting ── */
+  .flowctl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .btn{font-family:var(--sans);font-size:13px;font-weight:600;border-radius:8px;
+    padding:8px 15px;border:1px solid var(--border-strong);background:var(--surface);
+    color:var(--ink);cursor:pointer;transition:.15s}
+  .btn:hover{background:#f2f4f8}
+  .btn.retrieve{border-color:#cfdcf7;color:var(--blue)}
+  .btn.retrieve.on,.btn.retrieve:hover{background:var(--blue-soft)}
+  .btn.analyze{border-color:#c9e6d6;color:var(--green)}
+  .btn.analyze.on,.btn.analyze:hover{background:var(--green-soft)}
+  .flowlegend{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)}
+  /* dim everything when a path is playing; light traversed nodes */
+  .diagram.playing .box,.diagram.playing .arrow{opacity:.32;transition:opacity .3s}
+  .diagram .box,.diagram .arrow{transition:opacity .3s,box-shadow .3s,transform .3s}
+  .box.lit{opacity:1 !important;box-shadow:0 0 0 2px currentColor inset,0 2px 10px rgba(27,36,48,.1);
+    transform:translateY(-1px)}
+  .arrow.lit{opacity:1 !important}
+  .box.lit.pulse{animation:pulse .5s ease}
+  @keyframes pulse{0%{box-shadow:0 0 0 0 currentColor inset}
+    50%{box-shadow:0 0 0 3px currentColor inset,0 3px 14px rgba(27,36,48,.16)}
+    100%{box-shadow:0 0 0 2px currentColor inset,0 2px 10px rgba(27,36,48,.1)}}
 </style>
 </head>
 <body>
@@ -111,46 +133,57 @@
 
   <section>
     <h2><span class="n">1</span>System diagram</h2>
+    <p>Click a mode to trace how a question travels the system — <strong>retrieve</strong> navigates
+    to a cited answer; <strong>analyze</strong> loads a skill, runs code in the sandbox, and returns
+    an artifact gated by evals.</p>
+    <div class="flowctl">
+      <button class="btn retrieve" id="btnRetrieve">Ask: retrieve</button>
+      <button class="btn analyze" id="btnAnalyze">Ask: analyze</button>
+      <button class="btn" id="btnReset">Reset</button>
+      <span class="flowlegend" id="flowLegend">pick a mode</span>
+    </div>
     <div class="card">
+      <div class="diagram" id="diagram">
       <div class="row">
-        <div class="box navy">Client<span class="cap">portal / API</span></div>
-        <div class="arrow">→</div>
-        <div class="box navy">API layer<span class="cap">FastAPI</span></div>
-        <div class="arrow">→</div>
-        <div class="box indigo">Durable workflows<span class="cap">Temporal · retries · HITL</span></div>
+        <div class="box navy" id="d-client">Client<span class="cap">portal / API</span></div>
+        <div class="arrow" id="a-client-api">→</div>
+        <div class="box navy" id="d-api">API layer<span class="cap">FastAPI</span></div>
+        <div class="arrow" id="a-api-wf">→</div>
+        <div class="box indigo" id="d-wf">Durable workflows<span class="cap">Temporal · retries · HITL</span></div>
       </div>
-      <div class="arrow down">↓</div>
+      <div class="arrow down" id="a-down1">↓</div>
       <div class="region">
         <span class="tag">per-tenant data (isolated DB per client)</span>
         <div class="subrow">
-          <div class="box blue">Structured<span class="cap">survey / quant</span></div>
-          <div class="box blue">Unstructured<span class="cap">decks · reports · transcripts</span></div>
-          <div class="box amber">Enrichment / routing<span class="cap">tags → findable</span></div>
+          <div class="box blue" id="d-structured">Structured<span class="cap">survey / quant</span></div>
+          <div class="box blue" id="d-unstructured">Unstructured<span class="cap">decks · reports · transcripts</span></div>
+          <div class="box amber" id="d-enrich">Enrichment / routing<span class="cap">tags → findable</span></div>
         </div>
       </div>
-      <div class="arrow down">↓</div>
+      <div class="arrow down" id="a-down2">↓</div>
       <div class="region">
         <span class="tag">agent layer</span>
         <div class="row">
-          <div class="box indigo">Lead agent<span class="cap">plan · fan out</span></div>
-          <div class="arrow">→</div>
-          <div class="box green">Skill-loaded sub-agents<span class="cap">skills + scoped tools</span></div>
-          <div class="arrow">→</div>
-          <div class="box amber">Code sandbox<span class="cap">isolated · no network</span></div>
+          <div class="box indigo" id="d-lead">Lead agent<span class="cap">plan · fan out</span></div>
+          <div class="arrow" id="a-lead-sub">→</div>
+          <div class="box green" id="d-sub">Skill-loaded sub-agents<span class="cap">skills + scoped tools</span></div>
+          <div class="arrow" id="a-sub-sbx">→</div>
+          <div class="box amber" id="d-sandbox">Code sandbox<span class="cap">isolated · no network</span></div>
         </div>
         <div class="subrow" style="margin-top:10px">
-          <div class="box navy">Tool registry<span class="cap">typed · scoped allowlist</span></div>
-          <div class="box navy">Prompt assembler<span class="cap">skills + context</span></div>
-          <div class="box navy">Dispatch router<span class="cap">NL → structured</span></div>
+          <div class="box navy" id="d-registry">Tool registry<span class="cap">typed · scoped allowlist</span></div>
+          <div class="box navy" id="d-assembler">Prompt assembler<span class="cap">skills + context</span></div>
+          <div class="box navy" id="d-router">Dispatch router<span class="cap">NL → structured</span></div>
         </div>
       </div>
-      <div class="arrow down">↓</div>
+      <div class="arrow down" id="a-down3">↓</div>
       <div class="row">
-        <div class="box green">Evals gate<span class="cap">LLM-as-judge · reproducibility</span></div>
-        <div class="arrow">→</div>
-        <div class="box blue">Cited answer<span class="cap">traceable to source</span></div>
+        <div class="box green" id="d-evals">Evals gate<span class="cap">LLM-as-judge · reproducibility</span></div>
+        <div class="arrow" id="a-evals-out">→</div>
+        <div class="box blue" id="d-cited">Cited answer<span class="cap">traceable to source</span></div>
         <div class="arrow">/</div>
-        <div class="box green">Artifact<span class="cap">table · chart · insight</span></div>
+        <div class="box green" id="d-artifact">Artifact<span class="cap">table · chart · insight</span></div>
+      </div>
       </div>
       <div class="platform-strip">
         <b>Cross-cutting</b>
@@ -251,5 +284,61 @@
   code, prompts, client names, schema, or data.</p>
 
 </div>
+
+<script>
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+  var diagram = $("diagram");
+
+  // ordered traversal per mode: dim all, then light each hop
+  var PATHS = {
+    retrieve: {
+      color: "var(--blue)",
+      label: "retrieve · client → API → agent → navigate → cited answer",
+      steps: ["d-client","a-client-api","d-api","a-api-wf","d-wf","a-down1",
+              "d-structured","a-down2","d-lead","a-down3","d-evals","a-evals-out","d-cited"]
+    },
+    analyze: {
+      color: "var(--green)",
+      label: "analyze · client → API → agent → skill → sandbox → artifact (gated by evals)",
+      steps: ["d-client","a-client-api","d-api","a-api-wf","d-wf","a-down1",
+              "d-structured","a-down2","d-lead","a-lead-sub","d-sub","a-sub-sbx","d-sandbox",
+              "a-down3","d-evals","d-artifact"]
+    }
+  };
+
+  var timers = [];
+  function clearTimers(){ timers.forEach(clearTimeout); timers = []; }
+
+  function reset(){
+    clearTimers();
+    diagram.classList.remove("playing");
+    diagram.querySelectorAll(".lit").forEach(function(el){ el.classList.remove("lit","pulse"); });
+    $("btnRetrieve").classList.remove("on");
+    $("btnAnalyze").classList.remove("on");
+    $("flowLegend").textContent = "pick a mode";
+  }
+
+  function play(mode){
+    reset();
+    var path = PATHS[mode];
+    diagram.classList.add("playing");
+    $("btn"+mode.charAt(0).toUpperCase()+mode.slice(1)).classList.add("on");
+    $("flowLegend").textContent = path.label;
+    path.steps.forEach(function(id, i){
+      timers.push(setTimeout(function(){
+        var el = $(id); if(!el) return;
+        el.classList.add("lit");
+        if(el.classList.contains("box")){ el.classList.add("pulse");
+          setTimeout(function(){ el.classList.remove("pulse"); }, 500); }
+      }, i*260));
+    });
+  }
+
+  $("btnRetrieve").onclick = function(){ play("retrieve"); };
+  $("btnAnalyze").onclick  = function(){ play("analyze"); };
+  $("btnReset").onclick    = reset;
+})();
+</script>
 </body>
 </html>

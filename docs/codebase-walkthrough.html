@@ -94,6 +94,94 @@
     border-radius:6px;padding:3px 9px;color:var(--navy)}
   .skilllist{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px}
   .foot{color:var(--dim);font-size:12.5px;margin-top:40px;text-align:center}
+
+  /* ── interactive ingestion ── */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:14px}
+  .btn{font-family:var(--sans);font-size:13px;font-weight:600;border-radius:8px;
+    padding:8px 16px;border:1px solid var(--border-strong);background:var(--surface);
+    color:var(--ink);cursor:pointer;transition:.15s}
+  .btn:hover{background:#f2f4f8}
+  .btn.primary{background:var(--blue);border-color:var(--blue);color:#fff}
+  .btn.primary:hover{background:#2249a8}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  .btn .k{font-family:var(--mono);font-size:11px;opacity:.8}
+  .status{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)}
+
+  .stages{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;margin:4px 0 6px}
+  .stage{flex:1;min-width:118px;position:relative;border:1px solid var(--border-strong);
+    background:var(--surface);border-radius:9px;padding:10px 12px;transition:.25s}
+  .stage .num{position:absolute;top:8px;right:10px;width:18px;height:18px;border-radius:50%;
+    font-size:11px;font-weight:700;font-family:var(--mono);display:flex;align-items:center;
+    justify-content:center;background:#eef1f5;color:var(--dim);transition:.25s}
+  .stage .nm{font-size:12.5px;font-weight:650;color:var(--ink);padding-right:22px}
+  .stage .cap{font-size:10.5px;font-family:var(--mono);color:var(--dim);margin-top:2px}
+  .stage .det{font-size:11px;color:var(--muted);margin-top:6px;min-height:14px;
+    opacity:0;transition:.25s}
+  .stage.active{border-color:var(--blue);background:var(--blue-soft);box-shadow:0 0 0 1px var(--blue) inset}
+  .stage.active .num{background:var(--blue);color:#fff}
+  .stage.active .det{opacity:1;color:var(--blue)}
+  .stage.done{border-color:#c9e6d6;background:var(--green-soft)}
+  .stage.done .num{background:var(--green);color:#fff}
+  .stage.done .det{opacity:1;color:var(--green)}
+  .stage .spin{display:none;width:11px;height:11px;border:2px solid rgba(43,87,196,.25);
+    border-top-color:var(--blue);border-radius:50%;animation:spin .7s linear infinite;
+    position:absolute;top:11px;right:11px}
+  .stage.active .num{display:none}
+  .stage.active .spin{display:block}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .stagearrow{display:flex;align-items:center;color:var(--dim);font-size:15px;padding:0 5px}
+
+  /* live db tables */
+  .dbgrid{display:flex;gap:14px;flex-wrap:wrap;margin-top:16px}
+  .dbtable{flex:1;min-width:280px;background:var(--surface);border:1px solid var(--border);
+    border-radius:11px;box-shadow:var(--shadow);overflow:hidden;transition:.25s}
+  .dbtable.hot{border-color:var(--blue);box-shadow:0 0 0 2px var(--blue-soft),var(--shadow)}
+  .dbtable .th{display:flex;align-items:center;gap:8px;padding:10px 14px;border-bottom:1px solid var(--border);
+    background:#fafbfc}
+  .dbtable .th .tn{font-family:var(--mono);font-size:13px;font-weight:700;color:var(--navy)}
+  .dbtable .th .cnt{margin-left:auto;font-family:var(--mono);font-size:11px;color:var(--dim);
+    background:#eef1f5;border-radius:20px;padding:1px 9px}
+  .dbtable.hot .th .cnt{background:var(--blue-soft);color:var(--blue)}
+  .dbtable table{border:none;border-radius:0;font-size:12px}
+  .dbtable th{font-size:10.5px;padding:6px 12px}
+  .dbtable td{padding:6px 12px;font-family:var(--mono);font-size:11.5px;color:var(--navy);
+    white-space:nowrap}
+  .dbtable td.sum{white-space:normal;color:var(--muted);font-family:var(--sans);font-size:11.5px}
+  .dbtable td.pending{color:var(--dim);opacity:.5;font-style:italic}
+  .empty td{color:var(--dim);font-style:italic;text-align:center;font-family:var(--sans);padding:14px}
+  .dbrow{animation:rowin .35s ease}
+  @keyframes rowin{from{opacity:0;transform:translateY(-4px);background:var(--blue-soft)}
+    to{opacity:1;transform:none;background:transparent}}
+  .xrows{border-top:1px solid var(--border);padding:0 14px;max-height:0;overflow:hidden;transition:.3s}
+  .xrows.open{max-height:180px;padding:10px 14px}
+  .xrows .xhd{font-size:11px;color:var(--dim);font-family:var(--mono);margin-bottom:6px}
+  .xrows .xr{font-family:var(--mono);font-size:11px;color:var(--navy);padding:2px 0}
+  .xrows .xr b{color:var(--ink)}
+  .xtoggle{font-size:11px;color:var(--blue);cursor:pointer;font-weight:600;
+    padding:8px 14px;border-top:1px solid var(--border);user-select:none}
+  .xtoggle:hover{text-decoration:underline}
+
+  /* ER schema */
+  .er{display:flex;gap:0;align-items:center;flex-wrap:wrap;margin-top:14px}
+  .ent{background:var(--surface);border:1px solid var(--border-strong);border-radius:11px;
+    box-shadow:var(--shadow);min-width:230px;flex:1;overflow:hidden}
+  .ent .eh{background:#e9eef6;color:var(--navy);font-family:var(--mono);font-weight:700;
+    font-size:13px;padding:8px 14px;border-bottom:1px solid var(--border)}
+  .ent.n .eh{background:var(--blue-soft);color:var(--blue)}
+  .ent.d .eh{background:var(--green-soft);color:var(--green)}
+  .ent ul{list-style:none;margin:0;padding:6px 0}
+  .ent li{font-family:var(--mono);font-size:12px;padding:3px 14px;color:var(--navy);
+    display:flex;gap:8px}
+  .ent li .ty{color:var(--dim);margin-left:auto}
+  .ent li.key{font-weight:700;color:var(--ink)}
+  .ent li .badge{font-size:9px;font-weight:700;border-radius:4px;padding:1px 5px;
+    font-family:var(--mono)}
+  .badge.pk{background:#f6f0df;color:var(--amber)}
+  .badge.fk{background:var(--blue-soft);color:var(--blue)}
+  .erlink{display:flex;flex-direction:column;align-items:center;color:var(--dim);
+    font-family:var(--mono);font-size:11px;padding:0 4px;min-width:74px}
+  .erlink .ln{font-size:16px;letter-spacing:-1px}
+  .ercol{display:flex;flex-direction:column;gap:12px;flex:1;min-width:230px}
 </style>
 </head>
 <body>
@@ -193,7 +281,110 @@
   </section>
 
   <section>
-    <h2><span class="n">3</span>Repo map</h2>
+    <h2><span class="n">3</span>Database schema</h2>
+    <p>One filing owns everything it produces: its Item-section <strong>nodes</strong> (the
+    PageIndex tree) and its extracted <strong>datasets</strong>. Two one-to-many relationships,
+    keyed on <code>filing_id</code>.</p>
+    <div class="er">
+      <div class="ent">
+        <div class="eh">filings</div>
+        <ul>
+          <li class="key">id <span class="badge pk">PK</span><span class="ty">int</span></li>
+          <li>ticker<span class="ty">str</span></li>
+          <li>cik<span class="ty">str</span></li>
+          <li>company<span class="ty">str</span></li>
+          <li>form<span class="ty">str</span></li>
+          <li>period<span class="ty">str</span></li>
+          <li>accession<span class="ty">str</span></li>
+          <li>created_at<span class="ty">datetime</span></li>
+        </ul>
+      </div>
+      <div class="ercol">
+        <div class="erlink"><span class="ln">1 ─┈∞</span><span>has many</span></div>
+        <div class="ent n">
+          <div class="eh">nodes &nbsp;<span style="font-weight:400;font-size:10px">· one Item = one tree node</span></div>
+          <ul>
+            <li class="key">id <span class="badge pk">PK</span><span class="ty">int</span></li>
+            <li class="key">filing_id <span class="badge fk">FK</span><span class="ty">→ filings</span></li>
+            <li>order_ix<span class="ty">int</span></li>
+            <li>item<span class="ty">str</span></li>
+            <li>title<span class="ty">str</span></li>
+            <li>summary<span class="ty">str</span></li>
+            <li>text<span class="ty">str · ≤30k</span></li>
+          </ul>
+        </div>
+        <div class="erlink"><span class="ln">1 ─┈∞</span><span>has many</span></div>
+        <div class="ent d">
+          <div class="eh">datasets &nbsp;<span style="font-weight:400;font-size:10px">· extracted table</span></div>
+          <ul>
+            <li class="key">id <span class="badge pk">PK</span><span class="ty">int</span></li>
+            <li class="key">filing_id <span class="badge fk">FK</span><span class="ty">→ filings</span></li>
+            <li>name<span class="ty">str</span></li>
+            <li>label<span class="ty">str</span></li>
+            <li>columns<span class="ty">json</span></li>
+            <li>rows<span class="ty">json</span></li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>Run the ingestion</h2>
+    <p>Step through the pipeline and watch the three tables fill. <strong>Split into Items</strong>
+    writes the filing row + the tree nodes; <strong>Summarize</strong> back-fills each node's summary;
+    <strong>Fetch XBRL</strong> adds the two datasets. Real data from an Apple 10-K ingest.</p>
+    <div class="card">
+      <div class="controls">
+        <button class="btn primary" id="stepBtn">Step ▸</button>
+        <button class="btn" id="runBtn">Run all</button>
+        <button class="btn" id="resetBtn">Reset</button>
+        <span class="status" id="statusTxt">idle · stage 0 / 6</span>
+      </div>
+
+      <div class="stages" id="stages"></div>
+
+      <div class="dbgrid">
+        <div class="dbtable" id="tbl-filings">
+          <div class="th"><span class="tn">filings</span><span class="cnt" id="cnt-filings">0 rows</span></div>
+          <table>
+            <thead><tr><th>id</th><th>ticker</th><th>company</th><th>form</th><th>period</th><th>accession</th></tr></thead>
+            <tbody id="body-filings"><tr class="empty"><td colspan="6">— empty —</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dbgrid">
+        <div class="dbtable" id="tbl-nodes">
+          <div class="th"><span class="tn">nodes</span><span class="cnt" id="cnt-nodes">0 rows</span></div>
+          <table>
+            <thead><tr><th>order_ix</th><th>item</th><th>title</th><th>summary</th></tr></thead>
+            <tbody id="body-nodes"><tr class="empty"><td colspan="4">— empty —</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="dbgrid">
+        <div class="dbtable" id="tbl-datasets">
+          <div class="th"><span class="tn">datasets</span><span class="cnt" id="cnt-datasets">0 rows</span></div>
+          <table>
+            <thead><tr><th>name</th><th>label</th><th>columns</th><th>rows</th></tr></thead>
+            <tbody id="body-datasets"><tr class="empty"><td colspan="4">— empty —</td></tr></tbody>
+          </table>
+          <div class="xtoggle" id="xtoggle" style="display:none">▸ show income_statement rows</div>
+          <div class="xrows" id="xrows">
+            <div class="xhd">income_statement · values in $M · FY2022 / FY2023 / FY2024 / FY2025</div>
+            <div class="xr"><b>Revenues</b> &nbsp;394,328 / 383,285 / 391,035 / 416,161</div>
+            <div class="xr"><b>OperatingIncomeLoss</b> &nbsp;119,437 / 114,301 / 123,216 / 133,050</div>
+            <div class="xr"><b>NetIncomeLoss</b> &nbsp;99,803 / 96,995 / 93,736 / 112,010</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>Repo map</h2>
     <table>
       <thead><tr><th style="width:32%">File</th><th>Purpose</th></tr></thead>
       <tbody>
@@ -220,7 +411,7 @@
   </section>
 
   <section>
-    <h2><span class="n">4</span>Two design ideas worth pointing at</h2>
+    <h2><span class="n">6</span>Two design ideas worth pointing at</h2>
     <div class="grid2">
       <div class="callout">
         <div class="ic">⛨</div>
@@ -256,7 +447,7 @@
   </section>
 
   <section>
-    <h2><span class="n">5</span>Tech stack</h2>
+    <h2><span class="n">7</span>Tech stack</h2>
     <div class="stack">
       <b>Stack</b>
       <span class="kv">Python</span>
@@ -272,5 +463,165 @@
   PageIndex idea (reasoning-based, vectorless RAG); skill-driven analysis, the sandbox, and the UI are built around it.</p>
 
 </div>
+
+<script>
+(function(){
+  var STAGES = [
+    {nm:"Fetch",           cap:"SEC EDGAR",      det:"resolve CIK 0000320193 · latest 10-K"},
+    {nm:"Parse text",      cap:"strip HTML",     det:"BeautifulSoup → plain text"},
+    {nm:"Split into Items",cap:"PageIndex tree", det:"23 Item sections → filings + nodes"},
+    {nm:"Summarize",       cap:"per-node LLM",   det:"1–2 sentence summary per section"},
+    {nm:"Fetch XBRL",      cap:"company facts",  det:"income statement + balance sheet"},
+    {nm:"Persist",         cap:"Postgres",       det:"commit filings · nodes · datasets"}
+  ];
+
+  var FILING = ["1","AAPL","Apple Inc.","10-K","2025-09-27","0000320193-25-000xxx"];
+
+  var NODES = [
+    ["0","Item 1","Business","Overview of Apple's products, services, and segments."],
+    ["1","Item 1A","Risk Factors","Macroeconomic, supply-chain, competition, and legal risks."],
+    ["2","Item 2","Properties","Facilities and owned/leased real estate."],
+    ["3","Item 3","Legal Proceedings","Material pending legal matters."],
+    ["6","Item 7","MD&A","Management's discussion of results and liquidity."],
+    ["7","Item 7A","Market Risk","Interest-rate and foreign-currency exposure."],
+    ["8","Item 8","Financial Statements","Audited financials and notes."]
+  ];
+
+  var DATASETS = [
+    ["income_statement","Item 8 · Income Statement (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","5 rows"],
+    ["balance_sheet","Item 8 · Balance Sheet (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","6 rows"]
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var stagesEl = $("stages");
+  var runTimer = null;
+  var pos = 0;            // stages completed (0..6)
+
+  // build stage cards
+  STAGES.forEach(function(s, i){
+    if(i) { var a = document.createElement("div"); a.className="stagearrow"; a.textContent="→"; stagesEl.appendChild(a); }
+    var el = document.createElement("div");
+    el.className = "stage"; el.id = "stg-"+i;
+    el.innerHTML = '<div class="num">'+(i+1)+'</div><div class="spin"></div>'+
+      '<div class="nm">'+s.nm+'</div><div class="cap">'+s.cap+'</div>'+
+      '<div class="det">'+s.det+'</div>';
+    stagesEl.appendChild(el);
+  });
+
+  function setEmpty(bodyId, cols, msg){
+    $(bodyId).innerHTML = '<tr class="empty"><td colspan="'+cols+'">'+(msg||"— empty —")+'</td></tr>';
+  }
+  function hot(tblId, on){ $(tblId).classList.toggle("hot", on); }
+  function count(id, n){ $(id).textContent = n + (n===1?" row":" rows"); }
+
+  function fillFilings(){
+    hot("tbl-filings", true);
+    var tr = document.createElement("tr"); tr.className="dbrow";
+    FILING.forEach(function(v){ var td=document.createElement("td"); td.textContent=v; tr.appendChild(td); });
+    var b=$("body-filings"); b.innerHTML=""; b.appendChild(tr);
+    count("cnt-filings", 1);
+  }
+
+  function fillNodes(){
+    hot("tbl-nodes", true);
+    var b=$("body-nodes"); b.innerHTML="";
+    NODES.forEach(function(row, i){
+      setTimeout(function(){
+        var tr=document.createElement("tr"); tr.className="dbrow"; tr.id="nrow-"+i;
+        tr.innerHTML='<td>'+row[0]+'</td><td>'+row[1]+'</td><td>'+row[2]+'</td>'+
+          '<td class="sum pending" id="nsum-'+i+'">— pending summarize —</td>';
+        b.appendChild(tr);
+        count("cnt-nodes", i+1);
+      }, i*90);
+    });
+  }
+
+  function fillSummaries(){
+    hot("tbl-nodes", true);
+    NODES.forEach(function(row, i){
+      setTimeout(function(){
+        var c=$("nsum-"+i); if(!c) return;
+        c.className="sum"; c.textContent=row[3];
+        c.parentElement.classList.add("dbrow");
+      }, i*70);
+    });
+  }
+
+  function fillDatasets(){
+    hot("tbl-datasets", true);
+    var b=$("body-datasets"); b.innerHTML="";
+    DATASETS.forEach(function(row, i){
+      setTimeout(function(){
+        var tr=document.createElement("tr"); tr.className="dbrow";
+        tr.innerHTML='<td>'+row[0]+'</td><td class="sum">'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td>';
+        b.appendChild(tr);
+        count("cnt-datasets", i+1);
+        if(i===DATASETS.length-1) $("xtoggle").style.display="block";
+      }, i*160);
+    });
+  }
+
+  // side effects that land when a stage COMPLETES (index = stage just finished)
+  function applyEffect(i){
+    if(i===2){ fillFilings(); fillNodes(); }   // Split into Items
+    if(i===3){ fillSummaries(); }              // Summarize
+    if(i===4){ fillDatasets(); }               // Fetch XBRL
+  }
+
+  function render(){
+    for(var i=0;i<STAGES.length;i++){
+      var el=$("stg-"+i);
+      el.className = "stage" + (i<pos?" done":"") + (i===pos && running?" active":"");
+    }
+    $("statusTxt").textContent = (pos>=STAGES.length ? "done · 6 / 6"
+      : (running?"running":"idle") + " · stage "+pos+" / 6");
+    $("stepBtn").disabled = pos>=STAGES.length;
+    $("runBtn").disabled  = pos>=STAGES.length || running;
+  }
+
+  var running = false;
+
+  function step(){
+    if(pos>=STAGES.length) return;
+    running = true; render();                  // show active spinner on current stage
+    var cur = pos;
+    setTimeout(function(){
+      pos = cur+1; running = false;
+      applyEffect(cur);
+      render();
+    }, 620);
+  }
+
+  function runAll(){
+    if(pos>=STAGES.length) return;
+    step();
+    runTimer = setInterval(function(){
+      if(pos>=STAGES.length || running){ if(pos>=STAGES.length){ clearInterval(runTimer); runTimer=null; } return; }
+      step();
+    }, 780);
+  }
+
+  function reset(){
+    if(runTimer){ clearInterval(runTimer); runTimer=null; }
+    pos=0; running=false;
+    setEmpty("body-filings",6); setEmpty("body-nodes",4); setEmpty("body-datasets",4);
+    count("cnt-filings",0); count("cnt-nodes",0); count("cnt-datasets",0);
+    hot("tbl-filings",false); hot("tbl-nodes",false); hot("tbl-datasets",false);
+    $("xtoggle").style.display="none"; $("xrows").classList.remove("open");
+    $("xtoggle").textContent="▸ show income_statement rows";
+    render();
+  }
+
+  $("stepBtn").onclick = function(){ if(running) return; step(); };
+  $("runBtn").onclick  = runAll;
+  $("resetBtn").onclick= reset;
+  $("xtoggle").onclick = function(){
+    var open = $("xrows").classList.toggle("open");
+    this.textContent = (open?"▾ hide":"▸ show") + " income_statement rows";
+  };
+
+  render();
+})();
+</script>
 </body>
 </html>
