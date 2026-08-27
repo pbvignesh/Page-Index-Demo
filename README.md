@@ -36,7 +36,7 @@ app/
 skills/            analysis how-tos (margin_analysis, yoy_growth, ratio_analysis, common_size, guardrails)
 web/               the UI (talks to the API)
 cli.py             ingest / ask from the terminal
-docs/              HTML walkthroughs (this codebase; the ZoomRx architecture)
+docs/              HTML walkthroughs (this codebase; evals)
 ```
 
 ## Run
