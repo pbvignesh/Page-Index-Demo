@@ -242,9 +242,64 @@
     font-family:var(--mono);font-size:11px;padding:0 4px;min-width:74px}
   .erlink .ln{font-size:16px;letter-spacing:-1px}
   .ercol{display:flex;flex-direction:column;gap:12px;flex:1;min-width:230px}
+
+  /* ── left nav pane ── */
+  .layout{display:flex;align-items:flex-start}
+  .sidenav{position:sticky;top:0;align-self:flex-start;flex:0 0 232px;width:232px;
+    height:100vh;overflow-y:auto;background:var(--surface);border-right:1px solid var(--border);
+    padding:0 0 24px;display:flex;flex-direction:column}
+  .sidenav .brand{display:flex;align-items:center;gap:10px;padding:14px 18px;
+    border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+  .sidenav .brand .logo{width:24px;height:24px;font-size:11px}
+  .sidenav .brand .bt{font-size:14px;font-weight:650;color:var(--ink)}
+  .navlist{list-style:none;margin:0;padding:12px 10px;display:flex;flex-direction:column;gap:1px}
+  .navlist a{display:block;text-decoration:none;color:var(--muted);font-size:13px;
+    padding:7px 12px;border-radius:8px;border-left:2px solid transparent;transition:.15s;line-height:1.35}
+  .navlist a:hover{background:#f2f4f8;color:var(--ink)}
+  .navlist a.active{background:var(--blue-soft);color:var(--blue);border-left-color:var(--blue);font-weight:600}
+  .navrelated{margin-top:auto;padding:14px 20px 4px;border-top:1px solid var(--border)}
+  .navrelated .rl{font-size:10.5px;font-family:var(--mono);text-transform:uppercase;
+    letter-spacing:.6px;color:var(--dim);margin-bottom:8px}
+  .navrelated a{display:block;text-decoration:none;color:var(--muted);font-size:12.5px;
+    padding:4px 0;transition:.15s}
+  .navrelated a:hover{color:var(--blue)}
+  .maincol{flex:1;min-width:0}
+  html{scroll-behavior:smooth}
+  section[id]{scroll-margin-top:20px}
+  @media (max-width:820px){
+    .sidenav{display:none}
+    .maincol{flex:1 1 100%}
+  }
 </style>
 </head>
 <body>
+<div class="layout">
+
+<nav class="sidenav" aria-label="Page sections">
+  <div class="brand">
+    <div class="logo">FC</div>
+    <span class="bt">Filing Copilot</span>
+  </div>
+  <ul class="navlist" id="navList">
+    <li><a href="#overview">Overview</a></li>
+    <li><a href="#request-flow">Request flow</a></li>
+    <li><a href="#ingest-flow">Ingest flow</a></li>
+    <li><a href="#database-schema">Database schema</a></li>
+    <li><a href="#run-ingestion">Run the ingestion</a></li>
+    <li><a href="#how-it-answers">How it answers a question</a></li>
+    <li><a href="#repo-map">Repo map</a></li>
+    <li><a href="#design-ideas">Sandbox &amp; skills</a></li>
+    <li><a href="#tech-stack">Tech stack</a></li>
+  </ul>
+  <div class="navrelated">
+    <div class="rl">Related</div>
+    <a href="zoomrx-architecture.html">Architecture</a>
+    <a href="evals.html">Evals</a>
+    <a href="SPEC.md">Spec</a>
+  </div>
+</nav>
+
+<div class="maincol">
 <div class="topbar">
   <div class="logo">FC</div>
   <h1>Filing Copilot — how it's built</h1>
@@ -253,7 +308,7 @@
 
 <div class="wrap">
 
-  <section>
+  <section id="overview">
     <p class="lead"><strong>A small agent over SEC filings that decides, per question,
     between two capabilities.</strong> Ingest a company's 10-K once; then ask questions in plain
     English and get a cited answer or a computed artifact back.</p>
@@ -274,7 +329,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="request-flow">
     <h2><span class="n">1</span>Request flow — answering a question</h2>
     <p>The entry point is <code>agent/core.py → answer()</code>. A router (an LLM call with a
     keyword fallback) reads the filing's section list + dataset list and picks a path.</p>
@@ -315,7 +370,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="ingest-flow">
     <h2><span class="n">2</span>Ingest flow — getting a filing in</h2>
     <p>Driven by <code>ingest/pipeline.py</code> + <code>ingest/edgar.py</code>. One filing produces
     both the retrieval tree and the analysis datasets.</p>
@@ -340,7 +395,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="database-schema">
     <h2><span class="n">3</span>Database schema</h2>
     <p>One filing owns everything it produces: its Item-section <strong>nodes</strong> (the
     PageIndex tree) and its extracted <strong>datasets</strong>. Two one-to-many relationships,
@@ -389,7 +444,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="run-ingestion">
     <h2><span class="n">4</span>Run the ingestion</h2>
     <p>Step through the pipeline and watch the three tables fill. <strong>Split into Items</strong>
     writes the filing row + the tree nodes; <strong>Summarize</strong> back-fills each node's summary;
@@ -443,7 +498,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="how-it-answers">
     <h2><span class="n">5</span>How it answers a question</h2>
     <p>The router reads the filing's section list + dataset list and sends each question to
     <strong>RETRIEVE</strong> (answer from a section, cited) or <strong>ANALYZE</strong> (compute
@@ -469,7 +524,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="repo-map">
     <h2><span class="n">6</span>Repo map</h2>
     <table>
       <thead><tr><th style="width:32%">File</th><th>Purpose</th></tr></thead>
@@ -496,7 +551,7 @@
     </table>
   </section>
 
-  <section>
+  <section id="design-ideas">
     <h2><span class="n">7</span>Two design ideas worth pointing at</h2>
     <div class="grid2">
       <div class="callout">
@@ -532,7 +587,7 @@
     </div>
   </section>
 
-  <section>
+  <section id="tech-stack">
     <h2><span class="n">8</span>Tech stack</h2>
     <div class="stack">
       <b>Stack</b>
@@ -549,8 +604,56 @@
   PageIndex idea (reasoning-based, vectorless RAG); skill-driven analysis, the sandbox, and the UI are built around it.</p>
 
 </div>
+</div><!-- /.maincol -->
+</div><!-- /.layout -->
 
 <script>
+/* ── left-nav active-section highlighting ── */
+(function(){
+  var links = Array.prototype.slice.call(document.querySelectorAll("#navList a"));
+  var map = {};
+  var sections = [];
+  links.forEach(function(a){
+    var id = a.getAttribute("href").slice(1);
+    var sec = document.getElementById(id);
+    if(sec){ map[id] = a; sections.push(sec); }
+  });
+  function setActive(id){
+    links.forEach(function(a){
+      a.classList.toggle("active", a.getAttribute("href").slice(1) === id);
+    });
+  }
+  if("IntersectionObserver" in window){
+    var visible = {};
+    var io = new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting) visible[e.target.id] = e.intersectionRatio;
+        else delete visible[e.target.id];
+      });
+      // pick the topmost section currently intersecting
+      var best = null, bestTop = Infinity;
+      Object.keys(visible).forEach(function(id){
+        var t = document.getElementById(id).getBoundingClientRect().top;
+        if(t < bestTop){ bestTop = t; best = id; }
+      });
+      if(best) setActive(best);
+    }, {rootMargin:"-15% 0px -70% 0px", threshold:[0,1]});
+    sections.forEach(function(s){ io.observe(s); });
+  } else {
+    // fallback: scroll listener
+    var onScroll = function(){
+      var cur = sections[0] ? sections[0].id : null;
+      sections.forEach(function(s){
+        if(s.getBoundingClientRect().top <= 80) cur = s.id;
+      });
+      if(cur) setActive(cur);
+    };
+    window.addEventListener("scroll", onScroll, {passive:true});
+    onScroll();
+  }
+  if(sections[0]) setActive(sections[0].id);
+})();
+
 (function(){
   var STAGES = [
     {nm:"Fetch",           cap:"SEC EDGAR",      det:"resolve CIK 0000320193 · latest 10-K"},
