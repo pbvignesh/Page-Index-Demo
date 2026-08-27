@@ -3,17 +3,33 @@ the retrieve or analyze path."""
 import re
 
 from .. import llm
+from .. import intents as intents_mod
 from ..database import SessionLocal, Filing
 from . import skills, retrieve as retrieve_path, analyze as analyze_path
 
 
 def answer(filing_id: int, question: str) -> dict:
     filing = _load_filing(filing_id)
-    plan = _route(question, filing["nodes"], filing["datasets"])
 
-    if plan.get("mode") == "analyze" and filing["datasets"]:
-        return analyze_path.analyze(question, filing["datasets"], plan.get("dataset"), plan.get("skill"))
-    return retrieve_path.retrieve(question, filing["nodes"], plan.get("item"))
+    # RAG-style pre-filter: classify the question's intent, then pass only the
+    # matching sections/datasets to the router (not the whole filing).
+    question_intents = intents_mod.classify_question(question)
+    candidate_nodes, candidate_datasets = intents_mod.select_candidates(
+        filing["nodes"], filing["datasets"], question_intents
+    )
+
+    plan = _route(question, candidate_nodes, candidate_datasets)
+    if plan.get("mode") == "analyze" and candidate_datasets:
+        result = analyze_path.analyze(question, candidate_datasets, plan.get("dataset"), plan.get("skill"))
+    else:
+        result = retrieve_path.retrieve(question, candidate_nodes, plan.get("item"))
+
+    intent_label = ", ".join(question_intents) if question_intents else "general"
+    result["trace"] = [
+        {"label": f"Intent → {intent_label}", "sub": "classified from the question"},
+        {"label": "Select by intent", "sub": f"{len(candidate_nodes)} of {len(filing['nodes'])} sections"},
+    ] + result["trace"]
+    return result
 
 
 def _load_filing(filing_id: int) -> dict:
@@ -25,11 +41,13 @@ def _load_filing(filing_id: int) -> dict:
         ordered_nodes = sorted(filing.nodes, key=lambda node: node.order_ix)
         nodes = []
         for node in ordered_nodes:
-            nodes.append({"item": node.item, "title": node.title, "summary": node.summary, "text": node.text})
+            nodes.append({"item": node.item, "title": node.title, "summary": node.summary,
+                          "text": node.text, "intents": node.intents})
 
         datasets = {}
         for dataset in filing.datasets:
-            datasets[dataset.name] = {"label": dataset.label, "columns": dataset.columns, "rows": dataset.rows}
+            datasets[dataset.name] = {"label": dataset.label, "columns": dataset.columns,
+                                      "rows": dataset.rows, "intents": dataset.intents}
 
         return {"company": filing.company, "form": filing.form, "nodes": nodes, "datasets": datasets}
 

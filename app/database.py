@@ -40,6 +40,7 @@ class Node(Base):
     title: Mapped[str] = mapped_column(String(200))        # e.g. "Risk Factors"
     summary: Mapped[str] = mapped_column(Text, default="")  # node summary, used for tree search
     text: Mapped[str] = mapped_column(Text, default="")     # section body
+    intents: Mapped[list] = mapped_column(JSON, default=list)  # intent tags, set at ingest
 
     filing: Mapped["Filing"] = relationship(back_populates="nodes")
 
@@ -53,6 +54,7 @@ class Dataset(Base):
     label: Mapped[str] = mapped_column(String(120))   # human label + source citation
     columns: Mapped[list] = mapped_column(JSON, default=list)
     rows: Mapped[list] = mapped_column(JSON, default=list)
+    intents: Mapped[list] = mapped_column(JSON, default=list)  # intent tags, set at ingest
 
     filing: Mapped["Filing"] = relationship(back_populates="datasets")
 

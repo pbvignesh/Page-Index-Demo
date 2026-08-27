@@ -3,7 +3,7 @@ nodes), summarize each node, pull the structured financials, and persist."""
 import re
 
 from . import edgar
-from .. import llm, config
+from .. import llm, config, intents
 from ..database import SessionLocal, Filing, Node, Dataset, init_db
 
 # canonical 10-K item titles, used when the header line is messy
@@ -99,6 +99,7 @@ def ingest(ticker: str, form: str = "10-K", summarize: bool = True) -> int:
                 title=section["title"],
                 summary=summary,
                 text=section["text"],
+                intents=intents.annotate_node(section["item"], section["title"], summary),
             ))
 
         for dataset_name, dataset_data in financials.items():
@@ -107,6 +108,7 @@ def ingest(ticker: str, form: str = "10-K", summarize: bool = True) -> int:
                 label=dataset_data["label"],
                 columns=dataset_data["columns"],
                 rows=dataset_data["rows"],
+                intents=intents.annotate_dataset(dataset_name),
             ))
 
         session.add(filing)
