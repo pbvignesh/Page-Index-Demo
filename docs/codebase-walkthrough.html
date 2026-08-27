@@ -47,7 +47,7 @@
   .caps .card.green-top{border-top:3px solid var(--green)}
 
   /* flow diagram */
-  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:6px 0}
+  .flow{display:flex;align-items:center;gap:0;flex-wrap:wrap;margin:6px 0}
   .box{background:var(--surface);border:1px solid var(--border-strong);border-radius:9px;
     padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink);
     display:flex;flex-direction:column;justify-content:center;min-height:46px}
@@ -64,7 +64,9 @@
     letter-spacing:.6px;margin-bottom:8px;font-family:var(--mono)}
   .lane.retrieve .tag{color:var(--blue)}
   .lane.analyze .tag{color:var(--green)}
-  .flowcol{display:flex;flex-direction:column;gap:6px}
+  .flowcol{display:flex;flex-direction:column;gap:6px;flex:1;min-width:260px}
+  .converge{display:flex;flex-direction:column;align-items:center;gap:2px;margin-top:8px}
+  .converge .arrow{transform:rotate(90deg)}
 
   table{width:100%;border-collapse:collapse;background:var(--surface);
     border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13.5px}
@@ -107,7 +109,11 @@
   .btn .k{font-family:var(--mono);font-size:11px;opacity:.8}
   .status{margin-left:auto;font-family:var(--mono);font-size:12px;color:var(--dim)}
 
-  .stages{display:flex;align-items:stretch;flex-wrap:wrap;gap:0;margin:4px 0 6px}
+  .stages{display:flex;align-items:stretch;flex-wrap:nowrap;gap:0;margin:4px 0 6px;
+    overflow-x:auto;padding-bottom:3px}
+  .dbrow.hi{background:var(--blue-soft)}
+  .rvcap{font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;
+    letter-spacing:.5px;margin:10px 0 4px}
   .stage{flex:1;min-width:118px;position:relative;border:1px solid var(--border-strong);
     background:var(--surface);border-radius:9px;padding:10px 12px;transition:.25s}
   .stage .num{position:absolute;top:8px;right:10px;width:18px;height:18px;border-radius:50%;
@@ -297,10 +303,10 @@
   </div>
   <ul class="navlist" id="navList">
     <li><a href="#overview">Overview</a></li>
-    <li><a href="#request-flow">Request flow</a></li>
     <li><a href="#ingest-flow">Ingest flow</a></li>
     <li><a href="#database-schema">Database schema</a></li>
     <li><a href="#run-ingestion">Run the ingestion</a></li>
+    <li><a href="#request-flow">Request flow</a></li>
     <li><a href="#how-it-answers">How it answers a question</a></li>
     <li><a href="#repo-map">Repo map</a></li>
     <li><a href="#design-ideas">Sandbox &amp; skills</a></li>
@@ -308,7 +314,6 @@
   </ul>
   <div class="navrelated">
     <div class="rl">Related</div>
-    <a href="zoomrx-architecture.html">Architecture</a>
     <a href="evals.html">Evals</a>
     <a href="SPEC.md">Spec</a>
   </div>
@@ -344,52 +349,8 @@
     </div>
   </section>
 
-  <section id="request-flow">
-    <h2><span class="n">1</span>Request flow — answering a question</h2>
-    <p>The entry point is <code>agent/core.py → answer()</code>. First an <strong>intent pre-filter</strong>
-    (RAG-style) classifies the question and passes only the matching sections + datasets to a router (an LLM
-    call with a keyword fallback), which reads that short-list and picks a path.</p>
-    <div class="card">
-      <div class="flow">
-        <div class="box navy">Question<span class="cap">/ask</span></div>
-        <div class="arrow">→</div>
-        <div class="box indigo">Intent filter<span class="cap">intents.py · classify + select</span></div>
-        <div class="arrow">→</div>
-        <div class="box indigo">Router<span class="cap">core._route</span></div>
-        <div class="arrow">→</div>
-        <div class="flowcol" style="flex:1;min-width:280px">
-          <div class="lane retrieve">
-            <span class="tag">retrieve path · retrieve.py</span>
-            <div class="flow">
-              <div class="box blue">Navigate tree<span class="cap">pick Item node</span></div>
-              <div class="arrow">→</div>
-              <div class="box blue">Answer from section<span class="cap">cited to Item</span></div>
-            </div>
-          </div>
-          <div class="lane analyze">
-            <span class="tag">analyze path · analyze.py</span>
-            <div class="flow">
-              <div class="box green">Pick dataset + skill<span class="cap">load how-to</span></div>
-              <div class="arrow">→</div>
-              <div class="box green">Write pandas<span class="cap">model authors code</span></div>
-              <div class="arrow">→</div>
-              <div class="box amber">Docker sandbox<span class="cap">run, no network</span></div>
-              <div class="arrow">→</div>
-              <div class="box green">Artifact<span class="cap">table + finding</span></div>
-            </div>
-          </div>
-        </div>
-        <div class="arrow">→</div>
-        <div class="box navy">Grounding check<span class="cap">critic step</span></div>
-      </div>
-      <p style="margin-top:12px;margin-bottom:0">Both paths end at a <strong>critic / grounding
-      step</strong>: retrieve answers only from the cited section; analyze states the finding using
-      <em>only</em> the numbers the sandbox returned. Every response carries a citation + a step trace.</p>
-    </div>
-  </section>
-
   <section id="ingest-flow">
-    <h2><span class="n">2</span>Ingest flow — getting a filing in</h2>
+    <h2><span class="n">1</span>Ingest flow — getting a filing in</h2>
     <p>Driven by <code>ingest/pipeline.py</code> + <code>ingest/edgar.py</code>. One filing produces
     both the retrieval tree and the analysis datasets.</p>
     <div class="card">
@@ -398,7 +359,7 @@
         <div class="arrow">→</div>
         <div class="box blue">Parse text<span class="cap">strip HTML</span></div>
         <div class="arrow">→</div>
-        <div class="box blue">Split into Items<span class="cap">PageIndex tree + summaries</span></div>
+        <div class="box blue">Split into Items<span class="cap">tree · summaries · LLM intent tags</span></div>
       </div>
       <div class="flow" style="margin-top:10px">
         <div class="box navy" style="visibility:hidden">.</div>
@@ -409,12 +370,14 @@
       </div>
       <p style="margin-top:12px;margin-bottom:0">Text becomes <strong>Item-section nodes</strong>
       (each summarized for tree search); the XBRL company-facts API becomes structured
-      <strong>datasets</strong> (last ~4 fiscal years, restatement-aware). All persisted to Postgres.</p>
+      <strong>datasets</strong> (last ~4 fiscal years, restatement-aware). Every node and dataset is
+      then <strong>tagged with intents by the LLM</strong> — the labels that power the RAG-style
+      pre-filter at query time (<code>intents.py</code>). All persisted to Postgres.</p>
     </div>
   </section>
 
   <section id="database-schema">
-    <h2><span class="n">3</span>Database schema</h2>
+    <h2><span class="n">2</span>Database schema</h2>
     <p>One filing owns everything it produces: its Item-section <strong>nodes</strong> (the
     PageIndex tree) and its extracted <strong>datasets</strong>. Two one-to-many relationships,
     keyed on <code>filing_id</code>.</p>
@@ -444,6 +407,7 @@
             <li>title<span class="ty">str</span></li>
             <li>summary<span class="ty">str</span></li>
             <li>text<span class="ty">str · ≤30k</span></li>
+            <li>intents<span class="ty">json · LLM-tagged</span></li>
           </ul>
         </div>
         <div class="erlink"><span class="ln">1 ─┈∞</span><span>has many</span></div>
@@ -456,6 +420,7 @@
             <li>label<span class="ty">str</span></li>
             <li>columns<span class="ty">json</span></li>
             <li>rows<span class="ty">json</span></li>
+            <li>intents<span class="ty">json · LLM-tagged</span></li>
           </ul>
         </div>
       </div>
@@ -463,16 +428,17 @@
   </section>
 
   <section id="run-ingestion">
-    <h2><span class="n">4</span>Run the ingestion</h2>
+    <h2><span class="n">3</span>Run the ingestion</h2>
     <p>Step through the pipeline and watch the three tables fill. <strong>Split into Items</strong>
     writes the filing row + the tree nodes; <strong>Summarize</strong> back-fills each node's summary;
-    <strong>Fetch XBRL</strong> adds the two datasets. Real data from an Apple 10-K ingest.</p>
+    <strong>Fetch XBRL</strong> adds the two datasets; <strong>Tag intents</strong> back-fills the
+    LLM-classified intent labels on every node and dataset. Real data from an Apple 10-K ingest.</p>
     <div class="card">
       <div class="controls">
         <button class="btn primary" id="stepBtn">Step ▸</button>
         <button class="btn" id="runBtn">Run all</button>
         <button class="btn" id="resetBtn">Reset</button>
-        <span class="status" id="statusTxt">idle · stage 0 / 6</span>
+        <span class="status" id="statusTxt">idle · stage 0 / 7</span>
       </div>
 
       <div class="stages" id="stages"></div>
@@ -491,8 +457,8 @@
         <div class="dbtable" id="tbl-nodes">
           <div class="th"><span class="tn">nodes</span><span class="cnt" id="cnt-nodes">0 rows</span></div>
           <table>
-            <thead><tr><th>order_ix</th><th>item</th><th>title</th><th>summary</th></tr></thead>
-            <tbody id="body-nodes"><tr class="empty"><td colspan="4">— empty —</td></tr></tbody>
+            <thead><tr><th>order_ix</th><th>item</th><th>title</th><th>summary</th><th>intents</th></tr></thead>
+            <tbody id="body-nodes"><tr class="empty"><td colspan="5">— empty —</td></tr></tbody>
           </table>
         </div>
       </div>
@@ -501,8 +467,8 @@
         <div class="dbtable" id="tbl-datasets">
           <div class="th"><span class="tn">datasets</span><span class="cnt" id="cnt-datasets">0 rows</span></div>
           <table>
-            <thead><tr><th>name</th><th>label</th><th>columns</th><th>rows</th></tr></thead>
-            <tbody id="body-datasets"><tr class="empty"><td colspan="4">— empty —</td></tr></tbody>
+            <thead><tr><th>name</th><th>label</th><th>columns</th><th>rows</th><th>intents</th></tr></thead>
+            <tbody id="body-datasets"><tr class="empty"><td colspan="5">— empty —</td></tr></tbody>
           </table>
           <div class="xtoggle" id="xtoggle" style="display:none">▸ show income_statement rows</div>
           <div class="xrows" id="xrows">
@@ -513,6 +479,53 @@
           </div>
         </div>
       </div>
+    </div>
+  </section>
+
+  <section id="request-flow">
+    <h2><span class="n">4</span>Request flow — answering a question</h2>
+    <p>Now that a filing is in the database, here's how a question gets answered. The entry point is
+    <code>agent/core.py → answer()</code>. First an <strong>intent pre-filter</strong> (RAG-style)
+    classifies the question and passes only the matching sections + datasets to a router (an LLM call
+    with a keyword fallback), which reads that short-list and picks a path.</p>
+    <div class="card">
+      <div class="flow">
+        <div class="box navy">Question<span class="cap">/ask</span></div>
+        <div class="arrow">→</div>
+        <div class="box indigo">Intent filter<span class="cap">intents.py · classify + select</span></div>
+        <div class="arrow">→</div>
+        <div class="box indigo">Router<span class="cap">core._route</span></div>
+        <div class="arrow">→</div>
+        <div class="flowcol">
+          <div class="lane retrieve">
+            <span class="tag">retrieve path · retrieve.py</span>
+            <div class="flow">
+              <div class="box blue">Navigate tree<span class="cap">pick Item node</span></div>
+              <div class="arrow">→</div>
+              <div class="box blue">Answer from section<span class="cap">cited to Item</span></div>
+            </div>
+          </div>
+          <div class="lane analyze">
+            <span class="tag">analyze path · analyze.py</span>
+            <div class="flow">
+              <div class="box green">Pick dataset + skill<span class="cap">load how-to</span></div>
+              <div class="arrow">→</div>
+              <div class="box green">Write pandas<span class="cap">model authors code</span></div>
+              <div class="arrow">→</div>
+              <div class="box amber">Docker sandbox<span class="cap">run, no network</span></div>
+              <div class="arrow">→</div>
+              <div class="box green">Artifact<span class="cap">table + finding</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="converge">
+        <div class="arrow">→</div>
+        <div class="box navy">Grounding check<span class="cap">critic step · both paths converge here</span></div>
+      </div>
+      <p style="margin-top:12px;margin-bottom:0">Both paths end at a <strong>critic / grounding
+      step</strong>: retrieve answers only from the cited section; analyze states the finding using
+      <em>only</em> the numbers the sandbox returned. Every response carries a citation + a step trace.</p>
     </div>
   </section>
 
@@ -680,24 +693,25 @@
     {nm:"Split into Items",cap:"PageIndex tree", det:"23 Item sections → filings + nodes"},
     {nm:"Summarize",       cap:"per-node LLM",   det:"1–2 sentence summary per section"},
     {nm:"Fetch XBRL",      cap:"company facts",  det:"income statement + balance sheet"},
+    {nm:"Tag intents",     cap:"per-item LLM",   det:"classify each node + dataset → intents"},
     {nm:"Persist",         cap:"Postgres",       det:"commit filings · nodes · datasets"}
   ];
 
   var FILING = ["1","AAPL","Apple Inc.","10-K","2025-09-27","0000320193-25-000xxx"];
 
   var NODES = [
-    ["0","Item 1","Business","Overview of Apple's products, services, and segments."],
-    ["1","Item 1A","Risk Factors","Macroeconomic, supply-chain, competition, and legal risks."],
-    ["2","Item 2","Properties","Facilities and owned/leased real estate."],
-    ["3","Item 3","Legal Proceedings","Material pending legal matters."],
-    ["6","Item 7","MD&A","Management's discussion of results and liquidity."],
-    ["7","Item 7A","Market Risk","Interest-rate and foreign-currency exposure."],
-    ["8","Item 8","Financial Statements","Audited financials and notes."]
+    ["0","Item 1","Business","Overview of Apple's products, services, and segments.","business_overview"],
+    ["1","Item 1A","Risk Factors","Macroeconomic, supply-chain, competition, and legal risks.","risk_factors"],
+    ["2","Item 2","Properties","Facilities and owned/leased real estate.","business_overview"],
+    ["3","Item 3","Legal Proceedings","Material pending legal matters.","legal"],
+    ["6","Item 7","MD&A","Management's discussion of results and liquidity.","mdna, profitability_margins"],
+    ["7","Item 7A","Market Risk","Interest-rate and foreign-currency exposure.","market_risk"],
+    ["8","Item 8","Financial Statements","Audited financials and notes.","financials"]
   ];
 
   var DATASETS = [
-    ["income_statement","Item 8 · Income Statement (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","5 rows"],
-    ["balance_sheet","Item 8 · Balance Sheet (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","6 rows"]
+    ["income_statement","Item 8 · Income Statement (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","5 rows","financials, revenue_growth, profitability_margins"],
+    ["balance_sheet","Item 8 · Balance Sheet (XBRL)","[line_item, FY2022, FY2023, FY2024, FY2025]","6 rows","financials, liquidity_capital"]
   ];
 
   var $ = function(id){ return document.getElementById(id); };
@@ -737,7 +751,8 @@
       setTimeout(function(){
         var tr=document.createElement("tr"); tr.className="dbrow"; tr.id="nrow-"+i;
         tr.innerHTML='<td>'+row[0]+'</td><td>'+row[1]+'</td><td>'+row[2]+'</td>'+
-          '<td class="sum pending" id="nsum-'+i+'">— pending summarize —</td>';
+          '<td class="sum pending" id="nsum-'+i+'">— pending summarize —</td>'+
+          '<td class="sum pending" id="nint-'+i+'">— pending tag —</td>';
         b.appendChild(tr);
         count("cnt-nodes", i+1);
       }, i*90);
@@ -761,11 +776,28 @@
     DATASETS.forEach(function(row, i){
       setTimeout(function(){
         var tr=document.createElement("tr"); tr.className="dbrow";
-        tr.innerHTML='<td>'+row[0]+'</td><td class="sum">'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td>';
+        tr.innerHTML='<td>'+row[0]+'</td><td class="sum">'+row[1]+'</td><td>'+row[2]+'</td><td>'+row[3]+'</td>'+
+          '<td class="sum pending" id="dint-'+i+'">— pending tag —</td>';
         b.appendChild(tr);
         count("cnt-datasets", i+1);
         if(i===DATASETS.length-1) $("xtoggle").style.display="block";
       }, i*160);
+    });
+  }
+
+  function fillIntents(){
+    hot("tbl-nodes", true); hot("tbl-datasets", true);
+    NODES.forEach(function(row, i){
+      setTimeout(function(){
+        var c=$("nint-"+i); if(!c) return;
+        c.className="sum"; c.textContent=row[4];
+      }, i*70);
+    });
+    DATASETS.forEach(function(row, i){
+      setTimeout(function(){
+        var c=$("dint-"+i); if(!c) return;
+        c.className="sum"; c.textContent=row[4];
+      }, i*120);
     });
   }
 
@@ -774,6 +806,7 @@
     if(i===2){ fillFilings(); fillNodes(); }   // Split into Items
     if(i===3){ fillSummaries(); }              // Summarize
     if(i===4){ fillDatasets(); }               // Fetch XBRL
+    if(i===5){ fillIntents(); }                // Tag intents
   }
 
   function render(){
@@ -781,8 +814,9 @@
       var el=$("stg-"+i);
       el.className = "stage" + (i<pos?" done":"") + (i===pos && running?" active":"");
     }
-    $("statusTxt").textContent = (pos>=STAGES.length ? "done · 6 / 6"
-      : (running?"running":"idle") + " · stage "+pos+" / 6");
+    var n=STAGES.length;
+    $("statusTxt").textContent = (pos>=n ? "done · "+n+" / "+n
+      : (running?"running":"idle") + " · stage "+pos+" / "+n);
     $("stepBtn").disabled = pos>=STAGES.length;
     $("runBtn").disabled  = pos>=STAGES.length || running;
   }
@@ -920,13 +954,39 @@
       'to 32.0% (FY25).</p></div>';
   }
 
+  // DB-table POV — the rows read back OUT of Postgres to answer (mirrors the ingestion tables)
+  function srcTable(name, cnt, cols, rows){
+    var head = cols.map(function(c){ return '<th>'+c+'</th>'; }).join("");
+    var body = rows.map(function(r){
+      var cells = r.cells.map(function(v){ return '<td>'+v+'</td>'; }).join("");
+      return '<tr class="dbrow'+(r.hi?" hi":"")+'">'+cells+'</tr>';
+    }).join("");
+    return '<div class="dbtable"><div class="th"><span class="tn">'+name+'</span>'+
+      '<span class="cnt">'+cnt+'</span></div><table><thead><tr>'+head+'</tr></thead>'+
+      '<tbody>'+body+'</tbody></table></div>';
+  }
+  function retrieveSource(){
+    return '<div class="rvcap">read from nodes · answered from this row’s text</div>'+
+      srcTable("nodes", "1 of 23 read", ["item","title","intents"], [
+        {hi:true, cells:["Item 1A","Risk Factors","risk_factors"]}
+      ]);
+  }
+  function analyzeSource(){
+    return '<div class="rvcap">read from datasets · the rows the sandbox computes over</div>'+
+      srcTable("datasets · income_statement", "rows read", ["line_item","FY2022","FY2023","FY2024","FY2025"], [
+        {hi:true,  cells:["Revenues","394,328","383,285","391,035","416,161"]},
+        {hi:true,  cells:["OperatingIncomeLoss","119,437","114,301","123,216","133,050"]},
+        {cells:["NetIncomeLoss","99,803","96,995","93,736","112,010"]}
+      ]);
+  }
+
   // demo definitions — stages + which reveal appears when each stage COMPLETES
   var DEMOS = {
     ret: {
       cls: "ret",
       question: "What are Apple's main risk factors?",
       stages: [
-        {nm:"Classify intent",         cap:"intents.py",      det:"question → risk_factors"},
+        {nm:"Classify intent",         cap:"intents.py",      det:"LLM classifies → risk_factors"},
         {nm:"Select candidates",       cap:"select_candidates", det:"keep sections tagged risk_factors"},
         {nm:"Router → retrieve",       cap:"core._route",     det:"no computation needed"},
         {nm:"Navigate the tree",       cap:"retrieve.py",     det:"walk PageIndex nodes"},
@@ -938,6 +998,7 @@
       effect: function(i){
         if(i===1) return intentReveal();       // intent + candidate short-list
         if(i===3) return retrieveReveal();     // reveal tree + highlight after Navigate
+        if(i===4) return retrieveSource();     // the node row read from Postgres
         if(i===5) return retrieveAnswer();     // reveal cited answer after Answer
         return null;
       }
@@ -946,7 +1007,7 @@
       cls: "ana",
       question: "How has operating margin trended over recent years?",
       stages: [
-        {nm:"Classify intent",         cap:"intents.py",      det:"question → profitability_margins"},
+        {nm:"Classify intent",         cap:"intents.py",      det:"LLM classifies → profitability_margins"},
         {nm:"Select candidates",       cap:"select_candidates", det:"keep MD&A + income_statement"},
         {nm:"Router → analyze",        cap:"core._route",     det:"needs computation over a table"},
         {nm:"Pick dataset + skill",    cap:"analyze.py",      det:"income_statement · margin_analysis"},
@@ -957,7 +1018,7 @@
       ],
       effect: function(i){
         if(i===1) return intentReveal();       // intent + candidate short-list
-        if(i===3) return analyzeChips();       // dataset + skill
+        if(i===3) return analyzeChips() + analyzeSource();  // dataset + skill, then rows read from Postgres
         if(i===4) return analyzeCode();        // generated pandas
         if(i===6) return analyzeArtifact();    // result table + cite + finding
         return null;
