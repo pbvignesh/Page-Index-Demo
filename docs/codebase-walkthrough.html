@@ -186,6 +186,21 @@
   .tnode.sel .it::after{content:" ◂ selected";font-family:var(--sans);font-size:11px;
     font-weight:600;color:var(--blue)}
 
+  /* intent pre-filter reveal */
+  .prefilter{display:flex;align-items:center;gap:14px;margin-top:12px;flex-wrap:wrap}
+  .pfcol{text-align:center;padding:10px 16px;border:1px solid var(--border);border-radius:10px;
+    background:var(--surface);min-width:96px}
+  .pfcol.muted{opacity:.55}
+  .pfcol.hot{border-color:#cfdcf7;background:var(--blue-soft)}
+  .pfcol .pfn{font-family:var(--mono);font-size:22px;font-weight:700;color:var(--navy)}
+  .pfcol.hot .pfn{color:var(--blue)}
+  .pfcol .pfl{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;margin-top:2px}
+  .pfarrow{font-family:var(--mono);font-size:12px;color:var(--dim)}
+  .candrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{font-family:var(--mono);font-size:12.5px;padding:5px 10px;border-radius:7px;
+    background:#f2f4f8;border:1px solid var(--border);color:var(--navy)}
+  .chip.sel{background:var(--blue-soft);border-color:#cfdcf7;color:var(--blue);font-weight:600}
+
   /* cited answer bubble */
   .ansbubble{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);
     border-radius:10px;box-shadow:var(--shadow);padding:14px 16px}
@@ -331,11 +346,14 @@
 
   <section id="request-flow">
     <h2><span class="n">1</span>Request flow — answering a question</h2>
-    <p>The entry point is <code>agent/core.py → answer()</code>. A router (an LLM call with a
-    keyword fallback) reads the filing's section list + dataset list and picks a path.</p>
+    <p>The entry point is <code>agent/core.py → answer()</code>. First an <strong>intent pre-filter</strong>
+    (RAG-style) classifies the question and passes only the matching sections + datasets to a router (an LLM
+    call with a keyword fallback), which reads that short-list and picks a path.</p>
     <div class="card">
       <div class="flow">
         <div class="box navy">Question<span class="cap">/ask</span></div>
+        <div class="arrow">→</div>
+        <div class="box indigo">Intent filter<span class="cap">intents.py · classify + select</span></div>
         <div class="arrow">→</div>
         <div class="box indigo">Router<span class="cap">core._route</span></div>
         <div class="arrow">→</div>
@@ -500,9 +518,10 @@
 
   <section id="how-it-answers">
     <h2><span class="n">5</span>How it answers a question</h2>
-    <p>The router reads the filing's section list + dataset list and sends each question to
-    <strong>RETRIEVE</strong> (answer from a section, cited) or <strong>ANALYZE</strong> (compute
-    over a dataset in the sandbox). Step through one of each.</p>
+    <p>Every question first hits the <strong>intent pre-filter</strong> — it classifies the question and
+    keeps only the matching sections + datasets, so the router never sees the whole filing. The router then
+    sends the question to <strong>RETRIEVE</strong> (answer from a section, cited) or <strong>ANALYZE</strong>
+    (compute over a dataset in the sandbox). Step through one of each.</p>
     <div class="card">
       <div class="controls">
         <button class="btn ansmode active" id="modeRet" data-m="ret">Retrieve example</button>
@@ -835,6 +854,29 @@
     '                   [<span class="st">"Operating margin"</span>, *op_margin.round(<span class="st">1</span>)]],\n' +
     '          <span class="st">"summary"</span>: <span class="st">"Operating margin expanded from 30.3% to 32.0%."</span>}';
 
+  // intent pre-filter reveal — what the RAG-style select_candidates() keeps
+  var INTENT = {
+    ret: {intent:"risk_factors", total:23, kept:1,
+          chips:['<span class="chip sel">Item 1A · Risk Factors</span>']},
+    ana: {intent:"profitability_margins", total:23, kept:1,
+          chips:['<span class="chip sel">Item 7 · MD&amp;A</span>',
+                 '<span class="chip sel">income_statement · dataset</span>']}
+  };
+  function intentReveal(){
+    var d = INTENT[mode];
+    return '<div class="intentblk">'+
+      '<div class="dschips"><span class="lab">question intent</span>'+
+        '<span class="kv">'+d.intent+'</span></div>'+
+      '<div class="prefilter">'+
+        '<div class="pfcol muted"><div class="pfn">'+d.total+'</div>'+
+          '<div class="pfl">sections in filing</div></div>'+
+        '<div class="pfarrow">→ select by intent →</div>'+
+        '<div class="pfcol hot"><div class="pfn">'+d.kept+'</div>'+
+          '<div class="pfl">candidates to router</div></div>'+
+      '</div>'+
+      '<div class="candrow">'+d.chips.join("")+'</div></div>';
+  }
+
   // reveal HTML built for a given stage index of the current demo
   function retrieveReveal(){
     var rows = TREE.map(function(t){
@@ -884,6 +926,8 @@
       cls: "ret",
       question: "What are Apple's main risk factors?",
       stages: [
+        {nm:"Classify intent",         cap:"intents.py",      det:"question → risk_factors"},
+        {nm:"Select candidates",       cap:"select_candidates", det:"keep sections tagged risk_factors"},
         {nm:"Router → retrieve",       cap:"core._route",     det:"no computation needed"},
         {nm:"Navigate the tree",       cap:"retrieve.py",     det:"walk PageIndex nodes"},
         {nm:"Read the section",        cap:"Item 1A text",    det:"pulls the Item 1A text"},
@@ -892,8 +936,9 @@
       ],
       // reveal (as HTML) after stage index i completes; accumulate
       effect: function(i){
-        if(i===1) return retrieveReveal();     // reveal tree + highlight after Navigate
-        if(i===3) return retrieveAnswer();     // reveal cited answer after Answer
+        if(i===1) return intentReveal();       // intent + candidate short-list
+        if(i===3) return retrieveReveal();     // reveal tree + highlight after Navigate
+        if(i===5) return retrieveAnswer();     // reveal cited answer after Answer
         return null;
       }
     },
@@ -901,6 +946,8 @@
       cls: "ana",
       question: "How has operating margin trended over recent years?",
       stages: [
+        {nm:"Classify intent",         cap:"intents.py",      det:"question → profitability_margins"},
+        {nm:"Select candidates",       cap:"select_candidates", det:"keep MD&A + income_statement"},
         {nm:"Router → analyze",        cap:"core._route",     det:"needs computation over a table"},
         {nm:"Pick dataset + skill",    cap:"analyze.py",      det:"income_statement · margin_analysis"},
         {nm:"Write pandas",            cap:"model authors",   det:"generates the analysis code"},
@@ -909,9 +956,10 @@
         {nm:"Grounded",                cap:"critic",          det:"figures come from the sandbox result"}
       ],
       effect: function(i){
-        if(i===1) return analyzeChips();       // dataset + skill
-        if(i===2) return analyzeCode();        // generated pandas
-        if(i===4) return analyzeArtifact();    // result table + cite + finding
+        if(i===1) return intentReveal();       // intent + candidate short-list
+        if(i===3) return analyzeChips();       // dataset + skill
+        if(i===4) return analyzeCode();        // generated pandas
+        if(i===6) return analyzeArtifact();    // result table + cite + finding
         return null;
       }
     }
