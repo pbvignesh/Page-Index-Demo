@@ -1,6 +1,6 @@
 # Filing Copilot — Specification
 
-**Spec version:** 1.0
+**Spec version:** 1.1
 **Status:** matches the current implementation.
 
 This document is the source of truth for the product. It is written to support
@@ -38,7 +38,8 @@ single-page web UI.
 
 **Non-goals (deliberately out of scope unless a delta adds them)**
 - No authentication, multi-tenancy, or user accounts.
-- No vector database — retrieval is tree navigation, not similarity search.
+- No vector database — retrieval is tree navigation; section selection uses intent
+  tags (§6), not embeddings/similarity search.
 - No streaming responses; `/ask` returns a single JSON object.
 - No production hardening of the sandbox (local Docker only; no gVisor/k8s).
 - No background jobs / queues; ingest runs synchronously in the request.
@@ -86,6 +87,7 @@ Three tables (`app/database.py`), all owned by one filing.
 | title | str | e.g. "Risk Factors" |
 | summary | str | 1–2 sentence summary, used for tree search |
 | text | str | section body, capped at 30,000 chars |
+| intents | json | intent tags set at ingest, e.g. `["risk_factors"]` (§6, `app/intents.py`) |
 
 **Dataset** (a structured table extracted from the filing)
 | field | type | notes |
@@ -96,6 +98,7 @@ Three tables (`app/database.py`), all owned by one filing.
 | label | str | human label + citation, e.g. "Item 8 · Income Statement (XBRL)" |
 | columns | json | `["line_item", "FY2022", "FY2023", ...]` |
 | rows | json | `[["Revenues", 394328000000, ...], ...]`; values are **raw USD** or `null` |
+| intents | json | intent tags set at ingest, e.g. `["financials", "profitability_margins"]` |
 
 ## 5. Ingest (`app/ingest/`)
 
@@ -117,7 +120,11 @@ Three tables (`app/database.py`), all owned by one filing.
    concepts take the year-end value; candidate tags are merged; latest restatement wins.
    Concepts are declared in `edgar.INCOME_STATEMENT_CONCEPTS` / `BALANCE_SHEET_CONCEPTS`
    as `(display_name, [candidate_us_gaap_tags])`.
-8. Persist Filing + Nodes + Datasets; return the filing id.
+8. **Annotate** each node and dataset with **intents** (`intents.annotate_node` /
+   `intents.annotate_dataset`) — a small controlled vocabulary (`app/intents.py`).
+   Canonical Items use a deterministic map (Item 1A→`risk_factors`, Item 8→`financials`, …);
+   anything unmapped is tagged by the LLM. Datasets get a fixed map.
+9. Persist Filing + Nodes + Datasets; return the filing id.
 
 **Contract:** ingest is idempotent per (ticker, form, accession). Network calls go
 to SEC with the configured `SEC_USER_AGENT`.
@@ -126,12 +133,19 @@ to SEC with the configured `SEC_USER_AGENT`.
 
 `answer(filing_id, question) -> Response` (`agent/core.py`) is the entry point.
 
-1. `_load_filing` — load nodes (item/title/summary/text) and datasets (name/label/columns/rows).
-2. `_route` — one LLM call returns a **plan**: `{"mode": "retrieve"|"analyze",
-   "item": <Item|null>, "dataset": <name|null>, "skill": <name|null>}`. It prefers
-   ANALYZE for numeric/trend/margin/ratio questions when a dataset exists. On failure,
+1. `_load_filing` — load nodes (item/title/summary/text/intents) and datasets
+   (name/label/columns/rows/intents).
+2. **Intent pre-filter (RAG-style)** — `intents.classify_question` classifies the question
+   into intent(s); `intents.select_candidates` keeps only the nodes/datasets whose intents
+   overlap (capped; falls back to a small default set if none match). **Only these candidates
+   go to the router — not the whole filing.**
+3. `_route` — one LLM call over the **candidates** returns a **plan**: `{"mode": "retrieve"|"analyze",
+   "item": <Item|null>, "dataset": <name|null>, "skill": <name|null>}`. It prefers ANALYZE for
+   numeric/trend/margin/ratio questions when a candidate dataset exists. On failure,
    `_fallback_plan` keyword-guesses.
-3. Dispatch: `analyze` (if mode=analyze and datasets exist) else `retrieve`.
+4. Dispatch: `analyze` (mode=analyze and candidate datasets exist) else `retrieve`, over the candidates.
+5. The response `trace` is prefixed with the intent + selection steps, e.g.
+   `Intent → risk_factors` and `Select by intent · 2 of 23 sections`.
 
 ### 6.1 Retrieve (`agent/retrieve.py`)
 Pick the planned Item node (fallback: first node). One LLM call answers using only
@@ -239,10 +253,11 @@ app/
   config.py        settings from .env
   database.py      SQLAlchemy models: filings, nodes, datasets
   llm.py           Anthropic wrapper (complete, complete_json)
+  intents.py       intent vocabulary + annotation (ingest) + classify/select (query)
   api.py           FastAPI + serves the UI
   ingest/
     edgar.py       SEC EDGAR: filing text + XBRL financials
-    pipeline.py    split into Item sections, summarize, store + datasets
+    pipeline.py    split into Item sections, summarize, annotate intents, store + datasets
   agent/
     core.py        answer(): load filing, route retrieve vs analyze
     retrieve.py    retrieval path
@@ -292,3 +307,5 @@ Out of scope: <optional guardrails>
 **Changelog**
 - v1.0 — initial spec, matches the first implementation (ingest + retrieve + analyze,
   4 analysis skills, FastAPI + UI, Docker sandbox).
+- v1.1 — intent-based section selection: sections/datasets tagged at ingest; queries
+  classify intent and route over matched candidates only (`app/intents.py`).
