@@ -161,6 +161,66 @@
     padding:8px 14px;border-top:1px solid var(--border);user-select:none}
   .xtoggle:hover{text-decoration:underline}
 
+  /* ── how it answers a question ── */
+  .btn.ansmode.active{background:var(--navy);border-color:var(--navy);color:#fff}
+  .btn.ansmode.active:hover{background:#182f5a}
+  .qaq{background:#e9eef6;border:1px solid #cdd9ea;border-radius:10px;padding:12px 16px;
+    font-size:15px;font-weight:600;color:var(--navy);display:flex;gap:9px;align-items:baseline}
+  .qaq .lbl{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.5px}
+  .qareveal{margin-top:2px}
+  .rv{opacity:0;max-height:0;overflow:hidden;transition:.35s ease}
+  .rv.show{opacity:1;max-height:640px;margin-top:14px}
+
+  /* PageIndex tree reveal */
+  .tree{background:var(--surface);border:1px solid var(--border);border-radius:11px;
+    box-shadow:var(--shadow);padding:12px 14px}
+  .tree .th{font-family:var(--mono);font-size:11px;color:var(--dim);text-transform:uppercase;
+    letter-spacing:.5px;margin-bottom:8px}
+  .tnode{display:flex;gap:10px;align-items:baseline;font-family:var(--mono);font-size:12.5px;
+    padding:4px 8px;border-radius:7px;color:var(--navy);transition:.25s;border:1px solid transparent}
+  .tnode .it{font-weight:700;min-width:66px}
+  .tnode .tt{color:var(--muted);font-family:var(--sans);font-size:13px}
+  .tnode.sel{background:var(--blue-soft);border-color:#cfdcf7;color:var(--blue)}
+  .tnode.sel .tt{color:var(--blue)}
+  .tnode.sel .it::after{content:" ◂ selected";font-family:var(--sans);font-size:11px;
+    font-weight:600;color:var(--blue)}
+
+  /* cited answer bubble */
+  .ansbubble{background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--blue);
+    border-radius:10px;box-shadow:var(--shadow);padding:14px 16px}
+  .ansbubble.green{border-left-color:var(--green)}
+  .ansbubble p{margin:0 0 10px;color:var(--ink);font-size:14px}
+  .ansbubble p:last-child{margin-bottom:0}
+  .cite{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;
+    font-weight:600;background:var(--blue-soft);color:var(--blue);border-radius:20px;padding:3px 11px}
+  .cite.green{background:var(--green-soft);color:var(--green)}
+  .cite::before{content:"❝";font-size:12px;opacity:.7}
+
+  /* generated code block */
+  .codeblk{background:#1E2430;border:1px solid #2c3444;border-radius:10px;padding:14px 16px;
+    overflow-x:auto}
+  .codeblk pre{margin:0;font-family:var(--mono);font-size:12px;line-height:1.6;color:#d8dee9;
+    white-space:pre}
+  .codeblk .kw{color:#8ab4ff}
+  .codeblk .st{color:#9be3b4}
+  .codeblk .cm{color:#7d8798}
+
+  /* dataset + skill chips */
+  .dschips{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .dschips .lab{font-size:12px;color:var(--muted)}
+
+  /* result table */
+  .restable{border:1px solid var(--border);border-radius:10px;overflow:hidden}
+  .restable table{border-radius:0;border:none;font-size:13px}
+  .restable td,.restable th{font-family:var(--mono)}
+  .restable td.n,.restable th.n{text-align:right;white-space:nowrap}
+  .restable td.li{font-family:var(--sans);color:var(--ink);font-weight:600}
+  .restable td.up{color:var(--green);font-weight:700}
+  .sandline{font-family:var(--mono);font-size:11.5px;color:var(--muted);
+    background:#f6f0df;border:1px solid #e8ddba;border-radius:8px;padding:8px 12px;color:var(--amber)}
+  .finding{font-size:13px;color:var(--muted);margin-top:2px}
+
   /* ER schema */
   .er{display:flex;gap:0;align-items:center;flex-wrap:wrap;margin-top:14px}
   .ent{background:var(--surface);border:1px solid var(--border-strong);border-radius:11px;
@@ -384,7 +444,33 @@
   </section>
 
   <section>
-    <h2><span class="n">5</span>Repo map</h2>
+    <h2><span class="n">5</span>How it answers a question</h2>
+    <p>The router reads the filing's section list + dataset list and sends each question to
+    <strong>RETRIEVE</strong> (answer from a section, cited) or <strong>ANALYZE</strong> (compute
+    over a dataset in the sandbox). Step through one of each.</p>
+    <div class="card">
+      <div class="controls">
+        <button class="btn ansmode active" id="modeRet" data-m="ret">Retrieve example</button>
+        <button class="btn ansmode" id="modeAna" data-m="ana">Analyze example</button>
+        <span class="status" id="qaStatus"></span>
+      </div>
+
+      <div class="qaq" id="qaQuestion"></div>
+
+      <div class="controls" style="margin-top:12px">
+        <button class="btn primary" id="qaStepBtn">Step ▸</button>
+        <button class="btn" id="qaRunBtn">Run all</button>
+        <button class="btn" id="qaResetBtn">Reset</button>
+      </div>
+
+      <div class="stages" id="qaStages"></div>
+
+      <div class="qareveal" id="qaReveal"></div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>Repo map</h2>
     <table>
       <thead><tr><th style="width:32%">File</th><th>Purpose</th></tr></thead>
       <tbody>
@@ -411,7 +497,7 @@
   </section>
 
   <section>
-    <h2><span class="n">6</span>Two design ideas worth pointing at</h2>
+    <h2><span class="n">7</span>Two design ideas worth pointing at</h2>
     <div class="grid2">
       <div class="callout">
         <div class="ic">⛨</div>
@@ -447,7 +533,7 @@
   </section>
 
   <section>
-    <h2><span class="n">7</span>Tech stack</h2>
+    <h2><span class="n">8</span>Tech stack</h2>
     <div class="stack">
       <b>Stack</b>
       <span class="kv">Python</span>
@@ -621,6 +707,202 @@
   };
 
   render();
+})();
+
+/* ── how it answers a question ── */
+(function(){
+  var $ = function(id){ return document.getElementById(id); };
+
+  var TREE = [
+    ["Item 1","Business"],
+    ["Item 1A","Risk Factors"],
+    ["Item 7","MD&A"],
+    ["Item 8","Financial Statements"]
+  ];
+
+  var CODE =
+    '<span class="kw">df</span> = df.set_index(<span class="st">"line_item"</span>)\n' +
+    'years = [<span class="st">"FY2022"</span>, <span class="st">"FY2023"</span>, <span class="st">"FY2024"</span>, <span class="st">"FY2025"</span>]\n' +
+    'revenue   = df.loc[<span class="st">"Revenues"</span>, years]\n' +
+    'op_income = df.loc[<span class="st">"OperatingIncomeLoss"</span>, years]\n' +
+    'op_margin = op_income / revenue * <span class="st">100</span>\n' +
+    'result = {<span class="st">"columns"</span>: [<span class="st">"Line item"</span>, *years],\n' +
+    '          <span class="st">"rows"</span>: [[<span class="st">"Revenue ($M)"</span>, *revenue],\n' +
+    '                   [<span class="st">"Operating income ($M)"</span>, *op_income],\n' +
+    '                   [<span class="st">"Operating margin"</span>, *op_margin.round(<span class="st">1</span>)]],\n' +
+    '          <span class="st">"summary"</span>: <span class="st">"Operating margin expanded from 30.3% to 32.0%."</span>}';
+
+  // reveal HTML built for a given stage index of the current demo
+  function retrieveReveal(){
+    var rows = TREE.map(function(t){
+      var sel = t[0]==="Item 1A" ? " sel" : "";
+      return '<div class="tnode'+sel+'"><span class="it">'+t[0]+'</span>'+
+        '<span class="tt">'+t[1]+'</span></div>';
+    }).join("");
+    return '<div class="tree"><div class="th">PageIndex tree · nodes</div>'+rows+'</div>';
+  }
+  function retrieveAnswer(){
+    return '<div class="ansbubble">'+
+      '<p>Apple flags three main areas: <strong>macroeconomic conditions</strong> '+
+      '(spending, FX, rates); <strong>supply-chain concentration and international-trade '+
+      'risk</strong>; and <strong>financial / credit risks</strong>.</p>'+
+      '<span class="cite">Item 1A · Risk Factors</span></div>';
+  }
+  function analyzeChips(){
+    return '<div class="dschips"><span class="lab">dataset</span>'+
+      '<span class="kv">income_statement</span>'+
+      '<span class="lab" style="margin-left:6px">skill</span>'+
+      '<span class="kv">margin_analysis</span></div>';
+  }
+  function analyzeCode(){
+    return '<div class="codeblk"><pre>'+CODE+'</pre></div>';
+  }
+  function analyzeArtifact(){
+    return '<div class="ansbubble green">'+
+      '<div class="restable"><table>'+
+        '<thead><tr><th>Line item</th><th class="n">FY2022</th><th class="n">FY2023</th>'+
+        '<th class="n">FY2024</th><th class="n">FY2025</th></tr></thead>'+
+        '<tbody>'+
+        '<tr><td class="li">Revenue ($M)</td><td class="n">394,328</td><td class="n">383,285</td>'+
+        '<td class="n">391,035</td><td class="n">416,161</td></tr>'+
+        '<tr><td class="li">Operating income ($M)</td><td class="n">119,437</td><td class="n">114,301</td>'+
+        '<td class="n">123,216</td><td class="n">133,050</td></tr>'+
+        '<tr><td class="li">Operating margin</td><td class="n">30.3%</td><td class="n">29.8%</td>'+
+        '<td class="n">31.5%</td><td class="n up">32.0%</td></tr>'+
+        '</tbody></table></div>'+
+      '<p style="margin-top:12px"><span class="cite green">Item 8 · Income Statement (XBRL)</span></p>'+
+      '<p class="finding" style="margin-bottom:0">Operating margin expanded from 30.3% (FY22) '+
+      'to 32.0% (FY25).</p></div>';
+  }
+
+  // demo definitions — stages + which reveal appears when each stage COMPLETES
+  var DEMOS = {
+    ret: {
+      cls: "ret",
+      question: "What are Apple's main risk factors?",
+      stages: [
+        {nm:"Router → retrieve",       cap:"core._route",     det:"no computation needed"},
+        {nm:"Navigate the tree",       cap:"retrieve.py",     det:"walk PageIndex nodes"},
+        {nm:"Read the section",        cap:"Item 1A text",    det:"pulls the Item 1A text"},
+        {nm:"Answer (cited)",          cap:"one LLM call",    det:"cited to the Item"},
+        {nm:"Grounded",                cap:"critic",          det:"answer drawn from the cited section"}
+      ],
+      // reveal (as HTML) after stage index i completes; accumulate
+      effect: function(i){
+        if(i===1) return retrieveReveal();     // reveal tree + highlight after Navigate
+        if(i===3) return retrieveAnswer();     // reveal cited answer after Answer
+        return null;
+      }
+    },
+    ana: {
+      cls: "ana",
+      question: "How has operating margin trended over recent years?",
+      stages: [
+        {nm:"Router → analyze",        cap:"core._route",     det:"needs computation over a table"},
+        {nm:"Pick dataset + skill",    cap:"analyze.py",      det:"income_statement · margin_analysis"},
+        {nm:"Write pandas",            cap:"model authors",   det:"generates the analysis code"},
+        {nm:"Run in Docker sandbox",   cap:"sandbox.py",      det:"python:3.11-slim · --network none · 512MB · non-root"},
+        {nm:"Answer + artifact",       cap:"cited table",     det:"result → 1-line finding"},
+        {nm:"Grounded",                cap:"critic",          det:"figures come from the sandbox result"}
+      ],
+      effect: function(i){
+        if(i===1) return analyzeChips();       // dataset + skill
+        if(i===2) return analyzeCode();        // generated pandas
+        if(i===4) return analyzeArtifact();    // result table + cite + finding
+        return null;
+      }
+    }
+  };
+
+  var mode = "ret";
+  var pos = 0;
+  var running = false;
+  var runTimer = null;
+  var stagesEl = $("qaStages");
+
+  function demo(){ return DEMOS[mode]; }
+  function nStages(){ return demo().stages.length; }
+
+  function buildStages(){
+    stagesEl.innerHTML = "";
+    var d = demo();
+    d.stages.forEach(function(s, i){
+      if(i){ var a=document.createElement("div"); a.className="stagearrow"; a.textContent="→"; stagesEl.appendChild(a); }
+      var el=document.createElement("div");
+      el.className="stage"; el.id="qa-stg-"+i;
+      el.innerHTML='<div class="num">'+(i+1)+'</div><div class="spin"></div>'+
+        '<div class="nm">'+s.nm+'</div><div class="cap">'+s.cap+'</div>'+
+        '<div class="det">'+s.det+'</div>';
+      stagesEl.appendChild(el);
+    });
+  }
+
+  function render(){
+    var n=nStages();
+    for(var i=0;i<n;i++){
+      var el=$("qa-stg-"+i);
+      el.className="stage" + (i<pos?" done":"") + (i===pos && running?" active":"");
+    }
+    $("qaStatus").textContent = (pos>=n ? "done · "+n+" / "+n
+      : (running?"running":"idle") + " · stage "+pos+" / "+n);
+    $("qaStepBtn").disabled = pos>=n;
+    $("qaRunBtn").disabled  = pos>=n || running;
+  }
+
+  function applyEffect(i){
+    var html = demo().effect(i);
+    if(!html) return;
+    var wrap=document.createElement("div");
+    wrap.className="rv"; wrap.innerHTML=html;
+    $("qaReveal").appendChild(wrap);
+    // next frame → animate open
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){ wrap.classList.add("show"); }); });
+  }
+
+  function step(){
+    var n=nStages();
+    if(pos>=n) return;
+    running=true; render();
+    var cur=pos;
+    setTimeout(function(){
+      pos=cur+1; running=false;
+      applyEffect(cur);
+      render();
+    }, 620);
+  }
+
+  function runAll(){
+    if(pos>=nStages()) return;
+    step();
+    runTimer=setInterval(function(){
+      if(pos>=nStages() || running){ if(pos>=nStages()){ clearInterval(runTimer); runTimer=null; } return; }
+      step();
+    }, 820);
+  }
+
+  function reset(){
+    if(runTimer){ clearInterval(runTimer); runTimer=null; }
+    pos=0; running=false;
+    $("qaReveal").innerHTML="";
+    render();
+  }
+
+  function setMode(m){
+    mode=m;
+    $("modeRet").classList.toggle("active", m==="ret");
+    $("modeAna").classList.toggle("active", m==="ana");
+    $("qaQuestion").innerHTML='<span class="lbl">Question</span>'+demo().question;
+    buildStages();
+    reset();
+  }
+
+  $("qaStepBtn").onclick = function(){ if(running) return; step(); };
+  $("qaRunBtn").onclick  = runAll;
+  $("qaResetBtn").onclick= reset;
+  $("modeRet").onclick   = function(){ setMode("ret"); };
+  $("modeAna").onclick   = function(){ setMode("ana"); };
+
+  setMode("ret");
 })();
 </script>
 </body>
