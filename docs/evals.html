@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Filing Copilot — how you'd evaluate it</title>
+<style>
+  :root{
+    --bg:#F4F5F7; --surface:#FFFFFF; --border:#E5E8EE; --border-strong:#D8DCE4;
+    --ink:#1B2430; --muted:#57616F; --dim:#8B94A1;
+    --blue:#2B57C4; --blue-soft:#EAF0FC;
+    --green:#178A57; --green-soft:#E7F3ED;
+    --indigo:#4E48A8; --navy:#1E3A6E; --amber:#8A6410;
+    --red:#B4342B; --red-soft:#FBEAE8;
+    --mono:"SFMono-Regular",Menlo,Consolas,"Liberation Mono",monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    --shadow:0 1px 2px rgba(27,36,48,.04),0 2px 8px rgba(27,36,48,.05);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--sans);
+    line-height:1.55;-webkit-font-smoothing:antialiased;font-size:15px}
+  .topbar{position:sticky;top:0;z-index:5;background:rgba(255,255,255,.9);
+    backdrop-filter:saturate(180%) blur(8px);border-bottom:1px solid var(--border);
+    padding:12px 24px;display:flex;align-items:center;gap:12px}
+  .logo{width:26px;height:26px;border-radius:6px;background:var(--navy);color:#fff;
+    font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center;letter-spacing:.5px}
+  .topbar h1{font-size:15px;margin:0;font-weight:600}
+  .topbar .sub{color:var(--dim);font-size:13px;margin-left:auto}
+  .wrap{max-width:960px;margin:0 auto;padding:32px 24px 72px}
+  section{margin:0 0 30px}
+  h2{color:var(--navy);font-size:19px;margin:34px 0 12px;font-weight:650}
+  h2 .n{display:inline-block;width:24px;height:24px;line-height:24px;text-align:center;
+    background:var(--blue-soft);color:var(--blue);border-radius:6px;font-size:13px;
+    font-weight:700;margin-right:9px;vertical-align:2px}
+  p{color:var(--muted);margin:8px 0}
+  .lead{font-size:16px;color:var(--ink)}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    box-shadow:var(--shadow);padding:20px 22px}
+  code,.mono{font-family:var(--mono);font-size:12.5px}
+  .pill{display:inline-block;padding:2px 9px;border-radius:20px;font-size:12px;
+    font-weight:600;font-family:var(--mono)}
+  .pill.blue{background:var(--blue-soft);color:var(--blue)}
+  .pill.green{background:var(--green-soft);color:var(--green)}
+  .pill.navy{background:#e9eef6;color:var(--navy)}
+  .pill.amber{background:#f6f0df;color:var(--amber)}
+  .pill.red{background:var(--red-soft);color:var(--red)}
+
+  /* four-surface cards */
+  .caps{display:flex;gap:16px;flex-wrap:wrap;margin-top:14px}
+  .caps .card{flex:1;min-width:230px}
+  .caps h3{margin:0 0 4px;font-size:15px}
+  .caps .card.blue-top{border-top:3px solid var(--blue)}
+  .caps .card.green-top{border-top:3px solid var(--green)}
+  .caps .card.navy-top{border-top:3px solid var(--navy)}
+  .caps .card.indigo-top{border-top:3px solid var(--indigo)}
+  .caps .card p{margin:6px 0 0;font-size:13.5px}
+  .caps .qn{font-size:12px;color:var(--dim);font-style:italic;margin-top:8px}
+
+  /* flow diagram */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap;margin:6px 0}
+  .box{background:var(--surface);border:1px solid var(--border-strong);border-radius:9px;
+    padding:10px 14px;font-size:13px;font-weight:600;color:var(--ink);
+    display:flex;flex-direction:column;justify-content:center;min-height:46px}
+  .box .cap{font-size:11px;font-weight:500;color:var(--dim);font-family:var(--mono);margin-top:2px}
+  .box.blue{background:var(--blue-soft);border-color:#cfdcf7;color:var(--blue)}
+  .box.green{background:var(--green-soft);border-color:#c9e6d6;color:var(--green)}
+  .box.navy{background:#e9eef6;border-color:#cdd9ea;color:var(--navy)}
+  .box.indigo{background:#ebeaf6;border-color:#d5d3ee;color:var(--indigo)}
+  .box.amber{background:#f6f0df;border-color:#e8ddba;color:var(--amber)}
+  .arrow{display:flex;align-items:center;color:var(--dim);font-size:18px;padding:0 8px;font-weight:700}
+
+  table{width:100%;border-collapse:collapse;background:var(--surface);
+    border:1px solid var(--border);border-radius:10px;overflow:hidden;font-size:13.5px}
+  th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--border);vertical-align:top}
+  th{background:#fafbfc;color:var(--muted);font-weight:600;font-size:12px;
+    text-transform:uppercase;letter-spacing:.4px}
+  tr:last-child td{border-bottom:none}
+  td.f{font-family:var(--mono);font-size:12.5px;color:var(--navy);white-space:nowrap}
+  td.grp{background:#fafbfc;font-weight:700;color:var(--ink);font-family:var(--mono);font-size:12.5px}
+  .tag-det{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);
+    background:var(--blue-soft);color:var(--blue);border-radius:5px;padding:1px 6px;letter-spacing:.3px}
+  .tag-judge{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);
+    background:#f6f0df;color:var(--amber);border-radius:5px;padding:1px 6px;letter-spacing:.3px}
+  .tag-struct{display:inline-block;font-size:10.5px;font-weight:700;font-family:var(--mono);
+    background:#ebeaf6;color:var(--indigo);border-radius:5px;padding:1px 6px;letter-spacing:.3px}
+
+  .callout{display:flex;gap:14px;align-items:flex-start;background:var(--surface);
+    border:1px solid var(--border);border-left:3px solid var(--blue);border-radius:10px;
+    padding:16px 18px;box-shadow:var(--shadow)}
+  .callout.green{border-left-color:var(--green)}
+  .callout.amber{border-left-color:var(--amber)}
+  .callout .ic{width:34px;height:34px;border-radius:8px;background:var(--blue-soft);color:var(--blue);
+    display:flex;align-items:center;justify-content:center;font-weight:700;flex:0 0 34px;font-size:15px}
+  .callout.green .ic{background:var(--green-soft);color:var(--green)}
+  .callout.amber .ic{background:#f6f0df;color:var(--amber)}
+  .callout h3{margin:0 0 4px;font-size:15px}
+  .callout p{margin:4px 0}
+  .grid2{display:flex;gap:16px;flex-wrap:wrap}
+  .grid2>*{flex:1;min-width:300px}
+  .kv{font-family:var(--mono);font-size:12.5px;background:#f2f4f8;border:1px solid var(--border);
+    border-radius:6px;padding:3px 9px;color:var(--navy)}
+  .foot{color:var(--dim);font-size:12.5px;margin-top:40px;text-align:center}
+
+  /* worked-example / eval case card */
+  .evalcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    box-shadow:var(--shadow);overflow:hidden}
+  .evalcard .qa{background:#e9eef6;border-bottom:1px solid #cdd9ea;padding:12px 16px;
+    font-size:14.5px;font-weight:600;color:var(--navy);display:flex;gap:9px;align-items:baseline}
+  .evalcard .qa .lbl{font-family:var(--mono);font-size:11px;font-weight:700;color:var(--dim);
+    text-transform:uppercase;letter-spacing:.5px}
+  .evalcard .body{padding:14px 16px}
+  .miniart{border:1px solid var(--border);border-radius:9px;overflow:hidden;margin-bottom:12px}
+  .miniart table{border-radius:0;border:none;font-size:12.5px}
+  .miniart td,.miniart th{font-family:var(--mono)}
+  .miniart td.n,.miniart th.n{text-align:right;white-space:nowrap}
+  .miniart td.li{font-family:var(--sans);color:var(--ink);font-weight:600}
+  .miniart td.up{color:var(--green);font-weight:700}
+  .cite{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;
+    font-weight:600;background:var(--green-soft);color:var(--green);border-radius:20px;padding:3px 11px}
+  .cite::before{content:"❝";font-size:12px;opacity:.7}
+  .checks{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:6px}
+  .checks li{display:flex;gap:9px;align-items:baseline;font-size:13.5px;color:var(--ink)}
+  .checks li .ck{color:var(--green);font-weight:700;flex:0 0 16px}
+  .checks li .g{font-family:var(--mono);font-size:10.5px;margin-left:auto;color:var(--dim);white-space:nowrap}
+
+  /* metric chips */
+  .metrics{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+  .metric{border:1px solid var(--border-strong);border-radius:8px;padding:6px 12px;
+    background:var(--surface);font-size:12.5px}
+  .metric b{color:var(--navy);font-family:var(--mono);font-size:12px}
+  .metric span{color:var(--dim);display:block;font-size:11px;margin-top:1px}
+
+  /* transcript */
+  .transcript{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    box-shadow:var(--shadow);padding:6px 6px}
+  .turn{display:flex;gap:12px;padding:12px 14px;border-radius:10px}
+  .turn+.turn{border-top:1px solid var(--border)}
+  .turn .tno{flex:0 0 34px;height:34px;border-radius:8px;background:#e9eef6;color:var(--navy);
+    font-family:var(--mono);font-weight:700;font-size:12px;display:flex;align-items:center;justify-content:center}
+  .turn .tbody{flex:1}
+  .turn .q{font-weight:600;color:var(--ink);font-size:14px}
+  .turn .a{color:var(--muted);font-size:13px;margin-top:4px}
+  .turn .need{font-family:var(--mono);font-size:11px;color:var(--indigo);margin-top:6px;
+    background:#ebeaf6;border:1px solid #d5d3ee;border-radius:6px;padding:3px 8px;display:inline-block}
+  .turn .cite{background:var(--green-soft);color:var(--green);margin-top:8px}
+
+  /* comparison two-col */
+  .vs th:first-child{width:26%}
+  .vs td.h{font-weight:700;color:var(--navy)}
+
+  /* loop pipeline */
+  .loopwrap{background:var(--surface);border:1px solid var(--border);border-radius:12px;
+    box-shadow:var(--shadow);padding:20px 22px}
+  .loop{display:flex;align-items:center;flex-wrap:wrap;gap:0}
+  .lbox{border:1px solid var(--border-strong);border-radius:9px;padding:10px 13px;min-width:120px;
+    font-size:12.5px;font-weight:600;color:var(--ink);background:var(--surface)}
+  .lbox .cap{font-size:10.5px;font-weight:500;color:var(--dim);font-family:var(--mono);margin-top:2px}
+  .lbox.blue{background:var(--blue-soft);border-color:#cfdcf7;color:var(--blue)}
+  .lbox.amber{background:#f6f0df;border-color:#e8ddba;color:var(--amber)}
+  .lbox.indigo{background:#ebeaf6;border-color:#d5d3ee;color:var(--indigo)}
+  .lbox.green{background:var(--green-soft);border-color:#c9e6d6;color:var(--green)}
+  .lbox.navy{background:#e9eef6;border-color:#cdd9ea;color:var(--navy)}
+  .larrow{color:var(--dim);font-size:17px;padding:0 7px;font-weight:700}
+  .feedback{margin-top:14px;border-top:1px dashed var(--border-strong);padding-top:14px;
+    display:flex;align-items:center;gap:10px;font-size:13px;color:var(--muted)}
+  .feedback .fb{font-family:var(--mono);font-size:12px;color:var(--red);font-weight:700}
+  .feedback .ico{color:var(--red);font-size:18px;font-weight:700}
+</style>
+</head>
+<body>
+<div class="topbar">
+  <div class="logo">FC</div>
+  <h1>Filing Copilot — how you'd evaluate it</h1>
+  <span class="sub">evals · conceptual walkthrough</span>
+</div>
+
+<div class="wrap">
+
+  <section>
+    <p class="lead"><strong>This is how you'd evaluate the filing agent — the concept, not the code.</strong>
+    The agent routes each question to <span class="pill blue">RETRIEVE</span> (answer from a cited
+    section) or <span class="pill green">ANALYZE</span> (compute a table in a sandbox, cited to the
+    source). Evals are how you know it's still doing that correctly, question after question.</p>
+  </section>
+
+  <section>
+    <h2><span class="n">1</span>Why evals</h2>
+    <div class="callout">
+      <div class="ic">?</div>
+      <div>
+        <h3>You can't ship on "looks right"</h3>
+        <p>The agent is <strong>non-deterministic</strong> — the same question can route differently
+        or word an answer differently on two runs. And it makes the two claims that are easiest to get
+        subtly wrong: <strong>it states numbers</strong> and <strong>it cites sources</strong>. A demo
+        that reads well can still route to the wrong path, cite the wrong Item, or report a margin that
+        doesn't recompute. Evals turn "seems fine" into a <strong>measurable gate</strong> — a suite
+        that passes or fails on thresholds, run before every change and on live traffic.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">2</span>What to evaluate — the four surfaces</h2>
+    <p>Each answer passes through the same four decision points. Evaluate each one on its own so a
+    failure tells you <em>where</em> it broke.</p>
+    <div class="caps">
+      <div class="card navy-top">
+        <span class="pill navy">ROUTING</span>
+        <h3>Right path?</h3>
+        <p>Did the router pick <strong>retrieve vs analyze</strong> as expected — and pick the right
+        Item / dataset / skill within that path?</p>
+        <div class="qn">"trend in margin" must go analyze, not retrieve.</div>
+      </div>
+      <div class="card blue-top">
+        <span class="pill blue">RETRIEVAL GROUNDING</span>
+        <h3>Faithful to the section?</h3>
+        <p>Is the answer <strong>supported by the cited section's text</strong>, and is that citation
+        the <em>correct</em> Item — not a plausible-looking wrong one?</p>
+        <div class="qn">Risk-factor answer must cite Item 1A, not Item 7.</div>
+      </div>
+      <div class="card green-top">
+        <span class="pill green">ANALYSIS CORRECTNESS</span>
+        <h3>Numbers recompute?</h3>
+        <p>Do the sandbox's numbers <strong>independently recompute</strong> from the source dataset?
+        Right skill + dataset? Did the sandbox run cleanly and return a valid result?</p>
+        <div class="qn">32.0% must equal op_income ÷ revenue on income_statement.</div>
+      </div>
+      <div class="card indigo-top">
+        <span class="pill amber">ANSWER QUALITY</span>
+        <h3>Actually answers?</h3>
+        <p>Does the final response <strong>address the question</strong> — relevant, complete, and not
+        dodging with a technically-true non-answer?</p>
+        <div class="qn">"how has it trended" needs a direction, not just a table.</div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">3</span>Grader types — the craft point</h2>
+    <p>The whole game is choosing the strongest grader each surface will bear.
+    <strong>Prefer a deterministic check over a judge for anything numeric</strong> — if you can
+    recompute it, don't ask a model to eyeball it.</p>
+    <table>
+      <thead><tr><th style="width:20%">Grader</th><th>How it scores</th><th style="width:32%">Used for (this system)</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="tag-det">DETERMINISTIC</span><br><span style="font-size:11.5px;color:var(--dim)">strongest — use wherever possible</span></td>
+          <td>Code checks the answer against ground truth. No model in the loop, so it's exact and repeatable.</td>
+          <td>Recompute the metric from the source dataset &amp; compare · citation resolves to a real Item/table · units &amp; periods match ($M, FY) · sandbox <code>result</code> schema valid · <code>routing == expected</code></td>
+        </tr>
+        <tr>
+          <td><span class="tag-judge">LLM-AS-JUDGE</span><br><span style="font-size:11.5px;color:var(--dim)">for the fuzzy parts only</span></td>
+          <td>A strong judge model scores against a written <strong>rubric</strong>, calibrated against human labels so its scores are trusted.</td>
+          <td><strong>Faithfulness</strong> — every claim traces to the retrieved section text · <strong>relevance / completeness</strong> — does it answer the question</td>
+        </tr>
+        <tr>
+          <td><span class="tag-struct">STRUCTURAL / TRACE</span><br><span style="font-size:11.5px;color:var(--dim)">from the trace, free</span></td>
+          <td>Assertions over the response <code>trace</code> — which path ran, whether it errored, how long it took.</td>
+          <td>Which path executed · sandbox ran clean vs errored · latency within budget · a fallback plan didn't silently fire</td>
+        </tr>
+      </tbody>
+    </table>
+    <div class="callout green" style="margin-top:14px">
+      <div class="ic">✓</div>
+      <div>
+        <h3>Deterministic beats judge for numbers</h3>
+        <p>A margin is right or wrong — you have the source table, so recompute it and compare to a
+        tolerance. Save the judge for faithfulness and relevance, where there's no closed-form answer.
+        A judge that grades numbers is slower, costs tokens, and can be talked into a wrong "looks fine."</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">4</span>Single-turn evals</h2>
+    <p>One question → one answer, scored independently. This is the bulk of the suite: a curated case
+    set where each case knows its expected route, expected citation, and (for analyze) the recomputed
+    ground-truth numbers.</p>
+
+    <div class="evalcard">
+      <div class="qa"><span class="lbl">Case</span>How has operating margin trended over recent years?</div>
+      <div class="body">
+        <div class="miniart">
+          <table>
+            <thead><tr><th>Line item</th><th class="n">FY2022</th><th class="n">FY2023</th><th class="n">FY2024</th><th class="n">FY2025</th></tr></thead>
+            <tbody>
+              <tr><td class="li">Operating income ($M)</td><td class="n">119,437</td><td class="n">114,301</td><td class="n">123,216</td><td class="n">133,050</td></tr>
+              <tr><td class="li">Operating margin</td><td class="n">30.3%</td><td class="n">29.8%</td><td class="n">31.5%</td><td class="n up">32.0%</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <span class="cite">Item 8 · Income Statement (XBRL)</span>
+        <p style="margin:10px 0 0;font-size:13px;color:var(--muted)">→ <em>"Operating margin expanded from 30.3% (FY22) to 32.0% (FY25)."</em></p>
+
+        <ul class="checks">
+          <li><span class="ck">✓</span> routed to <strong>analyze</strong> (not retrieve) <span class="g">deterministic</span></li>
+          <li><span class="ck">✓</span> picked <strong>income_statement</strong> + <strong>margin_analysis</strong> <span class="g">deterministic</span></li>
+          <li><span class="ck">✓</span> every number <strong>recomputes</strong> from the source table (± tolerance) <span class="g">deterministic</span></li>
+          <li><span class="ck">✓</span> citation <strong>Item 8</strong> resolves to a real dataset <span class="g">deterministic</span></li>
+          <li><span class="ck">✓</span> sandbox ran clean; <code>result</code> schema valid <span class="g">structural</span></li>
+          <li><span class="ck">✓</span> judge: <strong>faithful</strong> — finding matches the numbers <span class="g">judge</span></li>
+          <li><span class="ck">✓</span> judge: <strong>relevant</strong> — states a direction, answers "trend" <span class="g">judge</span></li>
+        </ul>
+      </div>
+    </div>
+
+    <p style="margin-top:16px">The single-turn metrics — what the suite reports each run:</p>
+    <div class="metrics">
+      <div class="metric"><b>routing accuracy</b><span>% cases on the expected path</span></div>
+      <div class="metric"><b>numeric grounding</b><span>% numbers that exactly recompute</span></div>
+      <div class="metric"><b>citation validity</b><span>% citations that resolve to the right source</span></div>
+      <div class="metric"><b>faithfulness</b><span>judge: claims trace to retrieved text</span></div>
+      <div class="metric"><b>relevance</b><span>judge: answer addresses the question</span></div>
+    </div>
+    <div class="callout" style="margin-top:14px">
+      <div class="ic">▣</div>
+      <div>
+        <h3>Where it runs</h3>
+        <p>The same cases run in two places: as an <strong>offline suite / CI gate</strong> before any
+        prompt or skill change ships, and against <strong>sampled production traffic</strong> — where
+        the deterministic checks (recompute, citation-resolves) still work live, since the source table
+        is right there.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">5</span>Multi-turn evals</h2>
+    <p>A real session is a conversation — follow-ups that drop the company name, pronouns that point at
+    the last table, comparisons that assume prior turns. You evaluate a <strong>scripted trajectory</strong>:
+    a fixed sequence of turns, scored per-turn <em>and</em> as a whole.</p>
+
+    <div class="transcript">
+      <div class="turn">
+        <div class="tno">T1</div>
+        <div class="tbody">
+          <div class="q">What's Apple's operating margin trend?</div>
+          <div class="a">→ analyze · income_statement · margin expanded 30.3% → 32.0%</div>
+          <span class="cite">Item 8 · Income Statement (XBRL)</span>
+        </div>
+      </div>
+      <div class="turn">
+        <div class="tno">T2</div>
+        <div class="tbody">
+          <div class="q">And gross margin?</div>
+          <div class="a">→ analyze · same filing · gross margin trend</div>
+          <div class="need">must reuse the same filing + context — no "which company?"</div>
+        </div>
+      </div>
+      <div class="turn">
+        <div class="tno">T3</div>
+        <div class="tbody">
+          <div class="q">Is that better or worse than revenue growth?</div>
+          <div class="a">→ compares this turn's figures against T1/T2 results</div>
+          <div class="need">must reference prior turns' numbers, not recompute a contradiction</div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:16px">The checks single-turn <strong>can't</strong> catch — these only exist
+    across a conversation:</p>
+    <div class="caps">
+      <div class="card">
+        <h3>Context retention</h3>
+        <p>Carries the filing + prior results forward. Doesn't re-ask "which company?" or lose scope on T2.</p>
+      </div>
+      <div class="card">
+        <h3>Consistency</h3>
+        <p>Later turns don't contradict earlier numbers or claims — T3 uses the same 32.0% it said in T1.</p>
+      </div>
+      <div class="card">
+        <h3>Grounding maintained</h3>
+        <p>Every turn <em>still</em> cites / recomputes. No drift into ungrounded assertions as the chat gets longer.</p>
+      </div>
+      <div class="card">
+        <h3>Trajectory / goal completion</h3>
+        <p>The multi-step task actually finishes — by T3 the comparison the user was building toward is delivered.</p>
+      </div>
+      <div class="card">
+        <h3>No hallucination accumulation</h3>
+        <p>A small error on T1 doesn't compound into a wrong conclusion on T3. Errors don't snowball.</p>
+      </div>
+    </div>
+    <div class="callout amber" style="margin-top:14px">
+      <div class="ic">↻</div>
+      <div>
+        <h3>Method</h3>
+        <p>Fixed conversation scripts, replayed turn by turn. Each turn gets the <strong>same
+        per-turn deterministic + judge checks</strong> from §4 (route, recompute, citation, faithful).
+        Then a <strong>trajectory-level judge</strong> reads the <em>whole transcript</em> and scores
+        retention, consistency, and goal completion — the things you can only see across turns.</p>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <h2><span class="n">6</span>Single vs multi-turn</h2>
+    <table class="vs">
+      <thead><tr><th></th><th>Single-turn</th><th>Multi-turn</th></tr></thead>
+      <tbody>
+        <tr><td class="h">Unit</td><td>one question → one answer</td><td>a whole conversation (scripted turns)</td></tr>
+        <tr><td class="h">What it's for</td><td>is each answer correct &amp; grounded in isolation</td><td>does the agent hold context &amp; stay coherent across turns</td></tr>
+        <tr><td class="h">Catches</td><td>bad route · number that doesn't recompute · wrong citation · irrelevant answer</td><td>lost context · contradiction between turns · grounding drift · task never finishes</td></tr>
+        <tr><td class="h">Graders</td><td>deterministic + judge, per answer</td><td>per-turn checks <em>plus</em> a trajectory judge over the transcript</td></tr>
+        <tr><td class="h">Example failure it surfaces</td><td>"margin trend" routed to retrieve and answered from MD&amp;A prose instead of computing</td><td>T2 "and gross margin?" asks "for which company?" — dropped the filing from T1</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section>
+    <h2><span class="n">7</span>The eval loop</h2>
+    <p>The pipeline that turns all of this into a ship / no-ship decision — and feeds its own failures
+    back in.</p>
+    <div class="loopwrap">
+      <div class="loop">
+        <div class="lbox navy">Eval set<span class="cap">curated + adversarial cases</span></div>
+        <div class="larrow">→</div>
+        <div class="lbox">Graders<span class="cap">deterministic · judge · structural</span></div>
+        <div class="larrow">→</div>
+        <div class="lbox blue">Runner<span class="cap">offline CI gate + online sampling</span></div>
+        <div class="larrow">→</div>
+        <div class="lbox amber">Scores<span class="cap">vs thresholds</span></div>
+        <div class="larrow">→</div>
+        <div class="lbox green">Gate<span class="cap">ship / block regressions</span></div>
+      </div>
+      <div class="feedback">
+        <span class="ico">↩</span>
+        <span><span class="fb">production failures → new eval cases + prompt/skill fixes → re-run</span>
+        &nbsp;— a real miss (wrong route, a number that didn't recompute) becomes a permanent
+        case in the set, so it can never regress silently again.</span>
+      </div>
+    </div>
+    <div class="callout green" style="margin-top:14px">
+      <div class="ic">∞</div>
+      <div>
+        <h3>Self-improving</h3>
+        <p>The agent's own failures are the best test cases. Every production miss that gets diagnosed
+        is promoted into the eval set — so the suite grows toward exactly the questions this agent gets
+        wrong, and each fix is locked in by a regression case.</p>
+      </div>
+    </div>
+  </section>
+
+  <p class="foot">Filing Copilot · evals — conceptual walkthrough. Four surfaces (routing · retrieval
+  grounding · analysis correctness · answer quality), graded deterministically wherever a number or
+  citation can be recomputed, judged only for faithfulness &amp; relevance, run single-turn as a CI gate
+  and multi-turn as scripted trajectories.</p>
+
+</div>
+</body>
+</html>
