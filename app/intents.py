@@ -23,24 +23,6 @@ VOCABULARY = {
     "segments": "business or geographic segment breakdowns",
 }
 
-# Deterministic Item -> intents (fast path; anything unmapped is tagged by the LLM).
-ITEM_INTENTS = {
-    "Item 1": ["business_overview"],
-    "Item 1A": ["risk_factors"],
-    "Item 3": ["legal"],
-    "Item 7": ["mdna", "profitability_margins", "revenue_growth"],
-    "Item 7A": ["market_risk"],
-    "Item 8": ["financials"],
-    "Item 9A": ["governance"],
-    "Item 10": ["governance"],
-    "Item 11": ["governance"],
-    "Item 12": ["governance"],
-}
-DATASET_INTENTS = {
-    "income_statement": ["financials", "revenue_growth", "profitability_margins"],
-    "balance_sheet": ["financials", "liquidity_capital"],
-}
-
 # Keyword fallback for question classification if the LLM call fails.
 _KEYWORDS = {
     "risk_factors": ["risk", "threat", "headwind", "exposure"],
@@ -71,24 +53,24 @@ def _valid(intents) -> list[str]:
 # --- annotation (at ingest) ---
 
 def annotate_node(item: str, title: str, summary: str) -> list[str]:
-    """Intents for one section — deterministic for canonical Items, LLM otherwise."""
-    if item in ITEM_INTENTS:
-        return list(ITEM_INTENTS[item])
+    """Intents for one section — classified by the LLM from its heading + summary."""
     return _llm_tag(f"{item} — {title}\n{summary}")
 
 
-def annotate_dataset(name: str) -> list[str]:
-    return list(DATASET_INTENTS.get(name, ["financials"]))
+def annotate_dataset(name: str, label: str = "", columns: list[str] | None = None) -> list[str]:
+    """Intents for one dataset — classified by the LLM from its name, label, and columns."""
+    columns = columns or []
+    return _llm_tag(f"dataset: {name} — {label}\ncolumns: {', '.join(columns)}", default="financials")
 
 
-def _llm_tag(section_text: str) -> list[str]:
-    system = "Tag a SEC-filing section with 1-3 intents from the list. Return only intents that clearly apply."
-    user = f'Intents:\n{_catalog_text()}\n\nSection:\n{section_text}\n\nReturn JSON: {{"intents": ["<intent>", ...]}}'
+def _llm_tag(content: str, default: str = "business_overview") -> list[str]:
+    system = "Tag this SEC-filing content with 1-3 intents from the list. Return only intents that clearly apply."
+    user = f'Intents:\n{_catalog_text()}\n\nContent:\n{content}\n\nReturn JSON: {{"intents": ["<intent>", ...]}}'
     try:
         tags = _valid(llm.complete_json(system, user, max_tokens=120).get("intents", []))
-        return tags or ["business_overview"]
+        return tags or [default]
     except Exception:
-        return ["business_overview"]
+        return [default]
 
 
 # --- classification + selection (at query time) ---

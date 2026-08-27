@@ -108,7 +108,9 @@ def ingest(ticker: str, form: str = "10-K", summarize: bool = True) -> int:
                 label=dataset_data["label"],
                 columns=dataset_data["columns"],
                 rows=dataset_data["rows"],
-                intents=intents.annotate_dataset(dataset_name),
+                intents=intents.annotate_dataset(
+                    dataset_name, dataset_data["label"], dataset_data["columns"]
+                ),
             ))
 
         session.add(filing)

@@ -121,9 +121,9 @@ Three tables (`app/database.py`), all owned by one filing.
    Concepts are declared in `edgar.INCOME_STATEMENT_CONCEPTS` / `BALANCE_SHEET_CONCEPTS`
    as `(display_name, [candidate_us_gaap_tags])`.
 8. **Annotate** each node and dataset with **intents** (`intents.annotate_node` /
-   `intents.annotate_dataset`) — a small controlled vocabulary (`app/intents.py`).
-   Canonical Items use a deterministic map (Item 1A→`risk_factors`, Item 8→`financials`, …);
-   anything unmapped is tagged by the LLM. Datasets get a fixed map.
+   `intents.annotate_dataset`) — the LLM classifies every section and dataset into a
+   small controlled vocabulary (`app/intents.py`). No deterministic map; a safe default
+   is used only if the LLM call fails.
 9. Persist Filing + Nodes + Datasets; return the filing id.
 
 **Contract:** ingest is idempotent per (ticker, form, accession). Network calls go
